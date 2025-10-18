@@ -84,6 +84,24 @@ doxygen doxygen
 
 Online documentation: [https://stonefish.readthedocs.io](https://stonefish.readthedocs.io)
 
+#### 4. Docker Installation (Alternative)
+
+For a quick and easy setup, you can use Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/HERO-Lab-POSTECH/stonefish.git
+cd stonefish/docker
+
+# Build and run
+docker compose up -d
+
+# Access container
+docker exec -it stonefish-ros1-noetic bash
+```
+
+See [docker/README.md](docker/README.md) for detailed Docker usage guide.
+
 ### Modifications (Imaging Sonar Depth Occlusion Fix)
 
 This version includes fixes for imaging sonar depth occlusion issues where multiple overlapping objects at similar ranges would have their intensities incorrectly averaged.
