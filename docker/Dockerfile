@@ -37,6 +37,7 @@ ARG GITHUB_TOKEN
 # Clone and build Stonefish library
 RUN git clone https://${GITHUB_TOKEN}@github.com/HERO-Lab-POSTECH/stonefish.git && \
     cd stonefish && \
+    rm -rf build && \
     mkdir build && \
     cd build && \
     cmake .. && \
