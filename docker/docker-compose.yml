@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         GITHUB_TOKEN: ${GITHUB_TOKEN}
-    image: luckkim123/stonefish-ros1-noetic:1.0.0
+    image: luckkim123/stonefish-ros1-noetic:1.0.3
     container_name: stonefish-ros1-noetic-test
 
     # Enable GUI (X11 forwarding)
