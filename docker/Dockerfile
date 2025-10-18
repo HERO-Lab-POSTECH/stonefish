@@ -31,8 +31,11 @@ RUN if [ -f /usr/lib/x86_64-linux-gnu/cmake/SDL2/sdl2-config.cmake ]; then \
 # Set working directory
 WORKDIR /workspace
 
+# GitHub Personal Access Token (passed as build arg)
+ARG GITHUB_TOKEN
+
 # Clone and build Stonefish library
-RUN git clone https://github.com/HERO-Lab-POSTECH/stonefish.git && \
+RUN git clone https://${GITHUB_TOKEN}@github.com/HERO-Lab-POSTECH/stonefish.git && \
     cd stonefish && \
     mkdir build && \
     cd build && \

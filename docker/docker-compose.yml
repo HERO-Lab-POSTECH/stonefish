@@ -5,6 +5,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
     image: luckkim123/stonefish-ros1-noetic:1.0.0
     container_name: stonefish-ros1-noetic
 

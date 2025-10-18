@@ -24,13 +24,28 @@ sudo systemctl restart docker
 
 ## Quick Start
 
-### 1. X11 권한 설정
+### 1. GitHub Personal Access Token 설정
+
+HERO-Lab-POSTECH/stonefish는 private 저장소이므로 토큰이 필요합니다.
+
+```bash
+# 1. GitHub에서 Personal Access Token 생성
+#    https://github.com/settings/tokens
+#    - Scopes: repo (Full control of private repositories)
+
+# 2. .env 파일에 토큰 추가
+cd docker
+vim .env
+# GITHUB_TOKEN=your_token_here 부분을 실제 토큰으로 변경
+```
+
+### 2. X11 권한 설정
 
 ```bash
 xhost +local:docker
 ```
 
-### 2. 빌드 및 실행
+### 3. 빌드 및 실행
 
 ```bash
 cd docker
