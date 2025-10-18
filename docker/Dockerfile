@@ -16,6 +16,15 @@ RUN apt-get update && apt-get install -y \
     libglm-dev \
     libsdl2-dev \
     libfreetype6-dev \
+    # ROS dependencies
+    python3-catkin-tools \
+    python3-rosdep \
+    ros-noetic-pcl-conversions \
+    ros-noetic-pcl-ros \
+    ros-noetic-image-transport \
+    ros-noetic-controller-manager \
+    ros-noetic-tf \
+    ros-noetic-tf-conversions \
     # Additional utilities
     wget \
     curl \
@@ -44,12 +53,18 @@ RUN git clone https://${GITHUB_TOKEN}@github.com/HERO-Lab-POSTECH/stonefish.git 
     make install && \
     ldconfig
 
+# Initialize rosdep
+RUN rosdep update
+
 # Create ROS workspace
 RUN mkdir -p /workspace/catkin_ws/src
 WORKDIR /workspace/catkin_ws
 
-# Initialize catkin workspace
-RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && catkin_make"
+# Clone stonefish_sim package (includes cola2_msgs)
+RUN cd src && \
+    git clone https://${GITHUB_TOKEN}@github.com/HERO-Lab-POSTECH/stonefish_sim.git && \
+    cd .. && \
+    /bin/bash -c "source /opt/ros/noetic/setup.bash && catkin_make"
 
 # Set up environment variables
 ENV ROS_DISTRO=noetic
