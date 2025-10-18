@@ -9,6 +9,9 @@ services:
         GITHUB_TOKEN: ${GITHUB_TOKEN}
     image: luckkim123/stonefish-ros1-noetic:1.0.3
     container_name: stonefish-ros1-noetic-test
+    stdin_open: true
+    tty: true
+    privileged: true
 
     # Enable GUI (X11 forwarding)
     environment:
@@ -29,14 +32,12 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [compute, utility, graphics]
 
-    # Network mode for ROS communication
+    # Memory and IPC settings
+    shm_size: 32g
+    ipc: host
     network_mode: host
-
-    # Keep container running
-    stdin_open: true
-    tty: true
 
     command: >
       bash -c "
