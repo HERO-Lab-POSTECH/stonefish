@@ -20,24 +20,69 @@ Install official manufacturer drivers for your graphics card before using _Stone
 The software is developed and tested on *Linux Ubuntu*. It should work on any Unix based platform. A version for Windows is not available at this time. MacOS is not supported due to its lack of support for OpenGL 4.3.
 
 ### Installation
-1. Dependencies
-    * **OpenGL Mathematics library** (libglm-dev, version >= 0.9.9.0)
-    * **SDL2 library** (libsdl2-dev)
-    * **Freetype library** (libfreetype6-dev)
 
-2. Building
-    1. Clone _stonefish_ repository.
-    2. `cd stonefish`
-    3. `mkdir build`
-    4. `cd build`
-    5. `cmake ..`
-    6. `make -jX` (where X is the number of threads)
-    8. `sudo make install`
+#### 1. Dependencies
 
-3. Documentation
-    1. Go to "stonefish" directory.
-    2. `doxygen doxygen`
-    3. Open "docs/html/index.html".
+The following dependencies must be installed before building the library:
+
+* **OpenGL Mathematics library** (libglm-dev, version >= 0.9.9.0)
+* **SDL2 library** (libsdl2-dev)
+* **Freetype library** (libfreetype6-dev)
+
+Install on Ubuntu:
+```bash
+sudo apt-get update
+sudo apt-get install -y libglm-dev libsdl2-dev libfreetype6-dev
+```
+
+> **Note:** SDL2 library may need a small fix to the CMake configuration file to avoid build errors. Remove a space after `-lSDL2` in `/usr/lib/x86_64-linux-gnu/cmake/SDL2/sdl2-config.cmake`.
+
+#### 2. Building
+
+```bash
+# Clone the repository
+git clone https://github.com/HERO-Lab-POSTECH/stonefish.git
+cd stonefish
+
+# Create build directory
+mkdir build
+cd build
+
+# Configure with CMake
+cmake ..
+
+# Build (replace X with number of CPU cores)
+make -jX
+
+# Install system-wide
+sudo make install
+```
+
+#### Build Options
+
+CMake provides special build options:
+
+* **BUILD_TESTS**: Build test applications and examples
+  ```bash
+  cmake -DBUILD_TESTS=ON ..
+  ```
+
+* **EMBED_RESOURCES**: Embed internal resources into library binary (useful for binary releases)
+  ```bash
+  cmake -DEMBED_RESOURCES=ON ..
+  ```
+
+#### 3. Documentation
+
+Generate Doxygen code documentation:
+
+```bash
+cd stonefish
+doxygen doxygen
+# Open docs/html/index.html in browser
+```
+
+Online documentation: [https://stonefish.readthedocs.io](https://stonefish.readthedocs.io)
 
 ### Modifications (Imaging Sonar Depth Occlusion Fix)
 
