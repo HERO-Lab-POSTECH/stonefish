@@ -629,9 +629,6 @@ void OpenGLPipeline::Render(SimulationManager* sim)
 
 void OpenGLPipeline::ResizeScreenFBO(GLint width, GLint height)
 {
-    cInfo("OpenGLPipeline::ResizeScreenFBO(%d, %d) called", width, height);
-    cInfo("Old screenFBO=%u, screenTex=%u", screenFBO, screenTex);
-
     // Delete old FBO and texture
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &screenFBO);
@@ -653,8 +650,6 @@ void OpenGLPipeline::ResizeScreenFBO(GLint width, GLint height)
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
         cError("Display FBO resize failed!");
-    else
-        cInfo("Display FBO resized successfully. New screenFBO=%u, screenTex=%u", screenFBO, screenTex);
 
     OpenGLState::BindFramebuffer(0);
 

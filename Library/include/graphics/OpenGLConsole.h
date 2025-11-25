@@ -50,7 +50,14 @@ namespace sf
          \param windowH height of the window in pixels
          */
         void Init(int windowW, int windowH);
-        
+
+        //! A method that updates console size after window resize
+        /*!
+         \param windowW new width of the window in pixels
+         \param windowH new height of the window in pixels
+         */
+        void Resize(int windowW, int windowH);
+
         //! A method which renders the console.
         /*!
          \param overlay defines if the console should be overlayed on the scene rendering

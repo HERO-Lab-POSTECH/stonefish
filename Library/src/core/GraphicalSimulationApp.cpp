@@ -342,6 +342,10 @@ void GraphicalSimulationApp::WindowEvent(SDL_Event* event)
             // Resize GUI
             gui->Resize(w, h);
 
+            // Resize console
+            if(console != NULL)
+                ((OpenGLConsole*)console)->Resize(w, h);
+
             // Resize all views and pipeline
             if(glPipeline != NULL)
             {

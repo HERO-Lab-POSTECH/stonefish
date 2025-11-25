@@ -80,7 +80,14 @@ void OpenGLConsole::Init(int w, int h)
     
     printer = new OpenGLPrinter(GetShaderPath() + std::string(STANDARD_FONT_NAME), STANDARD_FONT_SIZE);
 }
-    
+
+void OpenGLConsole::Resize(int w, int h)
+{
+    windowW = w;
+    windowH = h;
+    OpenGLPrinter::SetWindowSize(windowW, windowH);
+}
+
 void OpenGLConsole::Scroll(GLfloat amount)
 {
     scrollVelocity += 25.f * amount;

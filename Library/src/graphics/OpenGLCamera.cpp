@@ -974,8 +974,6 @@ void OpenGLCamera::Destroy()
 
 void OpenGLCamera::Resize(GLint width, GLint height)
 {
-    cInfo("OpenGLCamera::Resize(%d, %d) called", width, height);
-
     // Update base class viewport dimensions
     OpenGLView::Resize(width, height);
 
@@ -1005,17 +1003,12 @@ void OpenGLCamera::Resize(GLint width, GLint height)
     // Recreate render textures with new size
     renderColorTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                     GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
-    cInfo("renderColorTex[0] = %u", renderColorTex[0]);
-
     renderColorTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                      GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
     renderViewNormalTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                          GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, FilteringMode::BILINEAR, false);
     renderDepthStencilTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                            GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL, FilteringMode::NEAREST, false);
-
-    cInfo("Textures created: color[0]=%u, color[1]=%u, normal=%u, depth=%u",
-          renderColorTex[0], renderColorTex[1], renderViewNormalTex, renderDepthStencilTex);
 
     // Recreate postprocessing textures
     postprocessTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
@@ -1133,8 +1126,6 @@ void OpenGLCamera::Resize(GLint width, GLint height)
     }
 
     OpenGLState::BindFramebuffer(0);
-
-    cInfo("OpenGLCamera::Resize completed successfully");
 }
 
 }
