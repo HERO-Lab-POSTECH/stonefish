@@ -352,11 +352,13 @@ void GraphicalSimulationApp::WindowEvent(SDL_Event* event)
                 OpenGLContent* content = glPipeline->getContent();
                 content->SetViewportSize(w, h);
 
-                // Resize all views (cameras, sonars, etc.)
+                // Resize only GUI trackball camera (not sensor cameras or sonars)
                 for(size_t i = 0; i < content->getViewsCount(); ++i)
                 {
                     OpenGLView* view = content->getView(i);
-                    view->Resize(w, h);
+                    OpenGLTrackball* trackball = dynamic_cast<OpenGLTrackball*>(view);
+                    if(trackball != nullptr)
+                        trackball->Resize(w, h);
                 }
 
                 // Resize screen framebuffer
