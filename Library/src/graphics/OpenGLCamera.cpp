@@ -966,10 +966,166 @@ void OpenGLCamera::Destroy()
         if(aoBlurShader[1] != nullptr) delete aoBlurShader[1];
         delete [] aoBlurShader;
     }
-    if(ssrShader != nullptr) delete ssrShader;    
+    if(ssrShader != nullptr) delete ssrShader;
     if(fxaaShader != nullptr) delete fxaaShader;
     if(flipShader != nullptr) delete flipShader;
     if(ssrBlur != nullptr) delete ssrBlur;
+}
+
+void OpenGLCamera::Resize(GLint width, GLint height)
+{
+    // Update base class viewport dimensions
+    OpenGLView::Resize(width, height);
+
+    // Delete existing textures
+    if(renderColorTex[0] != 0) glDeleteTextures(1, &renderColorTex[0]);
+    if(renderColorTex[1] != 0) glDeleteTextures(1, &renderColorTex[1]);
+    if(renderViewNormalTex != 0) glDeleteTextures(1, &renderViewNormalTex);
+    if(renderDepthStencilTex != 0) glDeleteTextures(1, &renderDepthStencilTex);
+    if(postprocessTex[0] != 0) glDeleteTextures(1, &postprocessTex[0]);
+    if(postprocessTex[1] != 0) glDeleteTextures(1, &postprocessTex[1]);
+    if(postprocessStencilTex != 0) glDeleteTextures(1, &postprocessStencilTex);
+    if(quaterPostprocessTex[0] != 0) glDeleteTextures(1, &quaterPostprocessTex[0]);
+    if(quaterPostprocessTex[1] != 0) glDeleteTextures(1, &quaterPostprocessTex[1]);
+    if(linearDepthTex[0] != 0) glDeleteTextures(1, &linearDepthTex[0]);
+    if(linearDepthTex[1] != 0) glDeleteTextures(1, &linearDepthTex[1]);
+
+    // Delete AO textures if enabled
+    if(aoFactor > 0)
+    {
+        if(aoResultTex != 0) glDeleteTextures(1, &aoResultTex);
+        if(aoBlurTex != 0) glDeleteTextures(1, &aoBlurTex);
+
+        glDeleteTextures(1, &aoDepthArrayTex);
+        glDeleteTextures(1, &aoResultArrayTex);
+    }
+
+    // Recreate render textures with new size
+    renderColorTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                    GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
+    renderColorTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                     GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
+    renderViewNormalTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                         GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, FilteringMode::BILINEAR, false);
+    renderDepthStencilTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                           GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL, FilteringMode::NEAREST, false);
+
+    // Recreate postprocessing textures
+    postprocessTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                    GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::NEAREST, false);
+    postprocessTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                       GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, FilteringMode::BILINEAR, false);
+    postprocessStencilTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                           GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL, FilteringMode::NEAREST, false);
+
+    quaterPostprocessTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth/2, viewportHeight/2, 0),
+                                                            GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
+    quaterPostprocessTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth/2, viewportHeight/2, 0),
+                                                            GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
+
+    // Recreate linear depth textures
+    linearDepthTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                       GL_R32F, GL_RED, GL_FLOAT, NULL, FilteringMode::NEAREST, false);
+    linearDepthTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
+                                                       GL_R32F, GL_RED, GL_FLOAT, NULL, FilteringMode::NEAREST, false);
+
+    // Recreate AO textures if enabled
+    if(aoFactor > 0)
+    {
+        GLint swizzle[4] = {GL_RED,GL_GREEN,GL_ZERO,GL_ZERO};
+
+        glGenTextures(1, &aoResultTex);
+        OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D, aoResultTex);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG16F, viewportWidth, viewportHeight);
+        glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glGenTextures(1, &aoBlurTex);
+        OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D, aoBlurTex);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG16F, viewportWidth, viewportHeight);
+        glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // Recreate AO array textures
+        int quarterWidth  = ((viewportWidth+3)/4);
+        int quarterHeight = ((viewportHeight+3)/4);
+
+        glGenTextures(1, &aoDepthArrayTex);
+        OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D_ARRAY, aoDepthArrayTex);
+        glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_R32F, quarterWidth, quarterHeight, HBAO_RANDOM_ELEMENTS);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glGenTextures(1, &aoResultArrayTex);
+        OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D_ARRAY, aoResultArrayTex);
+        glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RG16F, quarterWidth, quarterHeight, HBAO_RANDOM_ELEMENTS);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        OpenGLState::UnbindTexture(TEX_BASE);
+    }
+
+    // Reattach textures to FBOs
+    OpenGLState::BindFramebuffer(renderFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderColorTex[0], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderViewNormalTex, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderColorTex[1], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, renderDepthStencilTex, 0);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE)
+        cError("Render FBO resize failed!");
+
+    OpenGLState::BindFramebuffer(postprocessFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocessTex[0], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, postprocessTex[1], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, postprocessStencilTex, 0);
+
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE)
+        cError("Postprocess FBO resize failed!");
+
+    OpenGLState::BindFramebuffer(quaterPostprocessFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, quaterPostprocessTex[0], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, quaterPostprocessTex[1], 0);
+
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE)
+        cError("Quarter postprocess FBO resize failed!");
+
+    OpenGLState::BindFramebuffer(linearDepthFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, linearDepthTex[0], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, linearDepthTex[1], 0);
+
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE)
+        cError("Linear depth FBO resize failed!");
+
+    if(aoFactor > 0)
+    {
+        OpenGLState::BindFramebuffer(aoFinalFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, aoResultTex, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, aoBlurTex, 0);
+
+        status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if(status != GL_FRAMEBUFFER_COMPLETE)
+            cError("AO final FBO resize failed!");
+
+        OpenGLState::BindFramebuffer(aoCalcFBO);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, aoResultArrayTex, 0);
+
+        status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if(status != GL_FRAMEBUFFER_COMPLETE)
+            cError("AO calc FBO resize failed!");
+    }
+
+    OpenGLState::BindFramebuffer(0);
 }
 
 }

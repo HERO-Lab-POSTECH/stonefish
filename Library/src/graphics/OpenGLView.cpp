@@ -92,7 +92,13 @@ GLfloat OpenGLView::GetLogDepthConstant() const
     return 1.f/glm::log2(GetFarClip() + 1.f);
 }
 
-void OpenGLView::ExtractFrustumFromVP(glm::vec4 frustum[6], const glm::mat4& VP) 
+void OpenGLView::Resize(GLint width, GLint height)
+{
+    viewportWidth = width + width % 2;
+    viewportHeight = height + height % 2;
+}
+
+void OpenGLView::ExtractFrustumFromVP(glm::vec4 frustum[6], const glm::mat4& VP)
 {
 	// left
 	frustum[0].x = VP[0][3] + VP[0][0];

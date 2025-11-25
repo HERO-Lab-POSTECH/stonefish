@@ -201,6 +201,9 @@ namespace sf
         //! A method returning the exposure compensation factor.
         GLfloat getExposureCompensation();
 
+        //! A method that resizes the camera and recreates all rendering textures.
+        void Resize(GLint width, GLint height) override;
+
         //! A method returning the postprocessing framebuffer of the camera.
         GLuint getPostprocessFBO();
 

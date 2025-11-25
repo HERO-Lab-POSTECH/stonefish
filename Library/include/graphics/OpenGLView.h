@@ -120,6 +120,13 @@ namespace sf
         //! A method saying if the view works in continuous update mode.
         bool isContinuous();
 
+        //! A method that resizes the view.
+        /*!
+         \param width the new viewport width
+         \param height the new viewport height
+         */
+        virtual void Resize(GLint width, GLint height);
+
         //! A method extracting frustium planes from the view-projection matrix.
         /*!
          \param frustum a pointer to the 6 frustum planes
