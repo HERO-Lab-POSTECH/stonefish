@@ -327,12 +327,29 @@ void GraphicalSimulationApp::InitializeGUI()
 void GraphicalSimulationApp::WindowEvent(SDL_Event* event)
 {
     int w, h;
-    
+
     switch(event->window.event)
     {
         case SDL_WINDOWEVENT_RESIZED:
             SDL_GetWindowSize(window, &w, &h);
+
+            // Update window dimensions
+            windowW = w;
+            windowH = h;
+            rSettings.windowW = w;
+            rSettings.windowH = h;
+
+            // Resize GUI
             gui->Resize(w, h);
+
+            // Resize OpenGL framebuffer texture
+            if(glPipeline != NULL)
+            {
+                GLuint screenTex = glPipeline->getScreenTexture();
+                glBindTexture(GL_TEXTURE_2D, screenTex);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
             break;
     }
 }
