@@ -238,7 +238,7 @@ void GraphicalSimulationApp::InitializeSDL()
                               SDL_WINDOWPOS_CENTERED,
                               windowW,
                               windowH,
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN// | SDL_WINDOW_ALLOW_HIGHDPI
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE// | SDL_WINDOW_ALLOW_HIGHDPI
                               );
                               
     //Set window icon
