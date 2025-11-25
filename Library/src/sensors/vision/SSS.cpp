@@ -67,8 +67,7 @@ void SSS::setRangeMax(Scalar r)
 {
     range.y = r > Scalar(range.x) ? (GLfloat)r : range.x;
     Scalar pulseTime = (Scalar(2)*range.y/SOUND_VELOCITY_WATER) * Scalar(1.1);
-    if(freq <= 0.0 || freq > Scalar(1)/pulseTime) // Limit update frequency based on range (physical limit)
-        freq = Scalar(1)/pulseTime;
+    setUpdateFrequency(Scalar(1)/pulseTime);
 }
 
 void SSS::setGain(Scalar g)
@@ -91,7 +90,7 @@ void* SSS::getImageDataPointer(unsigned int index)
     return sonarData;
 }
 
-void SSS::getDisplayResolution(unsigned int& x, unsigned int& y) const
+void SSS::getDisplayResolution(unsigned int& x, unsigned int& y)
 {
     getResolution(x, y); //numOfBins x numOfLines
 }
@@ -116,14 +115,9 @@ Scalar SSS::getGain() const
     return gain;
 }
    
-VisionSensorType SSS::getVisionSensorType() const
+VisionSensorType SSS::getVisionSensorType()
 {
     return VisionSensorType::SSS;
-}
-
-OpenGLView* SSS::getOpenGLView() const
-{
-    return glSSS;
 }
 
 void SSS::InitGraphics()

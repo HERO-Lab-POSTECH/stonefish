@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Stonefish VERSION 1.5.0)
+project(Stonefish VERSION 1.3.0)
 
 # Automatic configuration
 configure_file(version.h.in version.h)
@@ -12,10 +12,10 @@ option(BUILD_TESTS "Build applications testing different features of the Stonefi
 option(EMBED_RESOURCES "Embed internal resources in the library executable" OFF)
 
 # Compile flags
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-Wno-stringop-overflow -O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(OpenGL_GL_PREFERENCE "GLVND")
 
 # Find required libraries

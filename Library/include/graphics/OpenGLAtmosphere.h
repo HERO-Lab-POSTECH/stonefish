@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 22/07/2017.
-//  Copyright (c) 2017-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2019 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_OpenGLAtmosphere__
@@ -42,8 +42,6 @@ namespace sf
         GLfloat planetRadiusInUnits;  
         glm::vec3 whitePoint;
         GLfloat atmLengthUnitInMeters;
-        GLfloat skyEmissivity;
-        GLfloat airTemperature;
 	};
     #pragma pack(0)
 
@@ -58,7 +56,7 @@ namespace sf
     
     class GLSLShader;
     class OpenGLPipeline;
-    class OpenGLView;
+    class OpenGLCamera;
     
     //! A class implementing a physically correct atmosphere in OpenGL.
     class OpenGLAtmosphere
@@ -84,20 +82,14 @@ namespace sf
         /*!
          \param view a pointer to the current view
          */
-        void DrawSkyAndSun(const OpenGLView* view);
-
-        //! A method that draws the sky and sun as thermal image.
-        /*!
-         \param view a pointer to the current view
-         */
-        void DrawSkyAndSunTemperature(const OpenGLView* view);
+        void DrawSkyAndSun(const OpenGLCamera* view);
         
         //! A method that bakes the shadow maps for the sun.
         /*!
          \param pipe a pointer to the rendering pipeline
          \param view a pointer to the current view
          */
-        void BakeShadowmaps(OpenGLPipeline* pipe, OpenGLView* view);
+        void BakeShadowmaps(OpenGLPipeline* pipe, OpenGLCamera* view);
         
         //! A method to setup a material shaders.
         void SetupMaterialShaders();
@@ -115,31 +107,7 @@ namespace sf
          \param elevationDeg a reference to a variable to store the sun elevation [deg]
          */
         void GetSunPosition(GLfloat& azimuthDeg, GLfloat& elevationDeg);
-
-        //! A method to set the air temperature at sea level.
-        /*!
-         \param temperature the air temperature at sea level [degC]
-         */
-        void setAirTemperature(GLfloat temperature);
-
-        //! A method to get the air temperature at sea level.
-        /*!
-         \return the air temperature at sea level [degC]
-         */
-        GLfloat getAirTemperature();
-
-        //! A method to set the air humidity at sea level.
-        /*!
-         \param humidity the air relative humidity at sea level [0-1]
-         */
-        void setAirHumidity(GLfloat humidity);
-
-        //! A method to get the air humidity at sea level.
-        /*!
-         \return the air relative humidity at sea level [0-1]
-         */
-        GLfloat getAirHumidity();
-
+        
         //! A method returning the OpenGL id of a texture.
         /*!
          \param id the atmosphere texture to get id for
@@ -149,7 +117,7 @@ namespace sf
         
         //! A method returning the sun direction.
         glm::vec3 GetSunDirection();
-  
+         
         //! A method displaying the sun shadow maps.
         /*!
          \param x the x coordinate of the origin of the shadow map display on screen
@@ -166,7 +134,6 @@ namespace sf
         
     private:
         //Data
-        void UpdateSkyEmissivity();
         unsigned int nPrecomputedWavelengths;
         unsigned int nScatteringOrders;
         GLuint sunSkyUBO;
@@ -191,10 +158,7 @@ namespace sf
         //Rendering
         GLfloat sunAzimuth;
         GLfloat sunElevation;
-        GLfloat airTemperature;
-        GLfloat airHumidity;
-
-        GLSLShader* skySunShaders[2];
+        GLSLShader* skySunShader;
         GLuint textures[AtmosphereTextures::TEXTURE_COUNT];
         static GLuint atmosphereAPI;
     };

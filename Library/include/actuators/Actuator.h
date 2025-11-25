@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 1/8/13.
-//  Copyright (c) 2013-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2013-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_Actuator__
@@ -34,7 +34,7 @@ namespace sf
     struct Renderable;
     
     //! An enum designating a type of the actuator.
-    enum class ActuatorType {MOTOR, SERVO, PROPELLER, THRUSTER, VBS, LIGHT, RUDDER, SUCTION_CUP, PUSH, SIMPLE_THRUSTER};
+    enum class ActuatorType {MOTOR, SERVO, PROPELLER, THRUSTER, VBS, LIGHT, RUDDER, SUCTION_CUP, PUSH};
     
     //! An abstract class representing any actuator.
     class Actuator
@@ -53,7 +53,7 @@ namespace sf
         /*!
          \param dt a time step of the simulation [s]
          */
-        virtual void Update(Scalar dt);
+        virtual void Update(Scalar dt) = 0;
         
         //! A method implementing the rendering of the actuator.
         virtual std::vector<Renderable> Render();
@@ -64,12 +64,6 @@ namespace sf
          */
         void setDisplayMode(DisplayMode m);
 
-        //! A method used to set the watchdog timeout.
-        /*!
-         \param timeout timeout of the watchdog [s]
-        */
-        void setWatchdog(Scalar timeout);
-
         //! A method returning the type of the actuator.
         virtual ActuatorType getType() const = 0;
 
@@ -77,15 +71,10 @@ namespace sf
         std::string getName() const;
     
     protected:
-        virtual void WatchdogTimeout();
-        void ResetWatchdog();
-
         DisplayMode dm;
 
     private:
         std::string name;
-        Scalar watchdog;
-        Scalar watchdogTimeout;
     };
 }
 

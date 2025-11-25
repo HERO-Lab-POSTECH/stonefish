@@ -46,7 +46,7 @@ void Pressure::InternalUpdate(Scalar dt)
         data += liq->GetPressure(getSensorFrame().getOrigin());
     
     //Record sample
-    Sample s{std::vector<Scalar>({data})};
+    Sample s(1, &data);
     AddSampleToHistory(s);
 }
 
@@ -61,7 +61,7 @@ void Pressure::setNoise(Scalar pressureStdDev)
     channels[0].setStdDev(btClamped(pressureStdDev, Scalar(0), Scalar(BT_LARGE_FLOAT)));
 }
 
-ScalarSensorType Pressure::getScalarSensorType() const
+ScalarSensorType Pressure::getScalarSensorType()
 {
     return ScalarSensorType::PRESSURE;
 }

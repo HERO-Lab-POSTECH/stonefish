@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 06/05/2019.
-//  Copyright (c) 2019-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2019-2023 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_Propeller__
@@ -45,7 +45,10 @@ namespace sf
          \param rightHand a flag to indicate if the propeller is right hand (clockwise rotation)
          \param inverted a flag to indicate if the setpoint is inverted (positive value results in backward force)
         */
-        Propeller(std::string uniqueName, std::shared_ptr<SolidEntity> propeller, Scalar diameter, Scalar thrustCoeff, Scalar torqueCoeff, Scalar maxRPM, bool rightHand, bool inverted = false);
+        Propeller(std::string uniqueName, SolidEntity* propeller, Scalar diameter, Scalar thrustCoeff, Scalar torqueCoeff, Scalar maxRPM, bool rightHand, bool inverted = false);
+        
+        //! A destructor.
+        ~Propeller();
         
         //! A method used to update the internal state of the thruster.
         /*!
@@ -81,8 +84,6 @@ namespace sf
         ActuatorType getType() const;
         
     private:
-        void WatchdogTimeout() override;
-
         //Params
         Scalar D;
         Scalar kT0;
@@ -91,7 +92,7 @@ namespace sf
         Scalar ki;
         Scalar iLim;
         Scalar omegaLim;
-        std::shared_ptr<SolidEntity> propeller_;
+        SolidEntity* prop;
         bool RH;
         bool inv;
         

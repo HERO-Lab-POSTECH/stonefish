@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2012-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2012-2023 Patryk Cieslak. All rights reserved.
 //
 
 #include "core/GraphicalSimulationApp.h"
@@ -47,36 +47,36 @@
 namespace sf
 {
 
-GraphicalSimulationApp::GraphicalSimulationApp(std::string title, std::string dataDirPath, RenderSettings r, HelperSettings h, SimulationManager* sim)
-: SimulationApp(title, dataDirPath, sim)
+GraphicalSimulationApp::GraphicalSimulationApp(std::string name, std::string dataDirPath, RenderSettings r, HelperSettings h, SimulationManager* sim)
+: SimulationApp(name, dataDirPath, sim)
 {
 #ifdef SHADER_DIR_PATH
     shaderPath = SHADER_DIR_PATH;
 #else
     shaderPath = "/usr/local/share/Stonefish/shaders/";
 #endif
-    glLoadingContext = nullptr;
-    glMainContext = nullptr;
-    trackballCenter = nullptr;
+    glLoadingContext = NULL;
+    glMainContext = NULL;
+    trackballCenter = NULL;
     selectedEntity = std::make_pair(nullptr, -1);
     displayHUD = true;
     displayKeymap = false;
     displayConsole = false;
     displayPerformance = false;
-    joystick = nullptr;
-    joystickAxes = nullptr;
-    joystickButtons = nullptr;
-    joystickHats = nullptr;
+    joystick = NULL;
+    joystickAxes = NULL;
+    joystickButtons = NULL;
+    joystickHats = NULL;
     mouseWasDown.type = SDL_LASTEVENT;
-    simulationThread = nullptr;
-    loadingThread = nullptr;
-    glPipeline = nullptr;
-    gui = nullptr;
+    limitFramerate = true;
+    simulationThread = NULL;
+    loadingThread = NULL;
+    glPipeline = NULL;
+    gui = NULL;
     timeQuery[0] = 0;
     timeQuery[1] = 0;
     timeQueryPingpong = 0;
     drawingTime = 0.0;
-    fps_ = 0.0;
     maxDrawingTime = 0.0;
     maxCounter = 0;
     rSettings = r;
@@ -89,11 +89,11 @@ GraphicalSimulationApp::GraphicalSimulationApp(std::string title, std::string da
 
 GraphicalSimulationApp::~GraphicalSimulationApp()
 {
-    if(console_ != nullptr) delete console_;
-    if(glPipeline != nullptr) delete glPipeline;
-    if(gui != nullptr) delete gui;
+    if(console != NULL) delete console;
+    if(glPipeline != NULL) delete glPipeline;
+    if(gui != NULL) delete gui;
     
-    if(joystick != nullptr)
+    if(joystick != NULL)
     {
         delete [] joystickButtons;
         delete [] joystickAxes;
@@ -119,6 +119,11 @@ void GraphicalSimulationApp::ShowConsole()
 void GraphicalSimulationApp::HideConsole()
 {
     displayConsole = false;
+}
+
+void GraphicalSimulationApp::setLimitFramerate(bool enabled)
+{
+    limitFramerate = enabled;
 }
 
 OpenGLPipeline* GraphicalSimulationApp::getGLPipeline()
@@ -209,8 +214,6 @@ void GraphicalSimulationApp::Init()
 
     //Create performance counters
     glGenQueries(2, timeQuery);
-
-    state_ = SimulationState::STOPPED;
 }
 
 void GraphicalSimulationApp::InitializeSDL()
@@ -261,19 +264,16 @@ void GraphicalSimulationApp::InitializeSDL()
     
     //Create OpenGL contexts
     glLoadingContext = SDL_GL_CreateContext(window);
-    if(glLoadingContext == nullptr)
+    if(glLoadingContext == NULL)
         cCritical("SDL2: %s", SDL_GetError());
     
     glMainContext = SDL_GL_CreateContext(window);
-    if(glMainContext == nullptr)
+    if(glMainContext == NULL)
         cCritical("SDL2: %s", SDL_GetError());
     
-    //Disable vertical synchronization
-    if(!rSettings.verticalSync)
-    {
-        if(SDL_GL_SetSwapInterval(0) == -1)
-            cError("SDL2: %s", SDL_GetError());
-    }
+    //Disable vertical synchronization --> use framerate limitting instead (e.g. max 60 FPS)
+    if(SDL_GL_SetSwapInterval(0) == -1)
+        cError("SDL2: %s", SDL_GetError());
     
     //Initialize OpenGL function handlers 
     int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
@@ -288,15 +288,17 @@ void GraphicalSimulationApp::InitializeSDL()
     GLSLShader::Init();
     
     //Initialize console output
-    std::vector<ConsoleMessage> textLines = console_->getLines();
-    delete console_;
-    console_ = new OpenGLConsole();
+    std::vector<ConsoleMessage> textLines = console->getLines();
+    delete console;
+    console = new OpenGLConsole();
     for(size_t i=0; i<textLines.size(); ++i)
-        console_->AppendMessage(textLines[i]);
-    ((OpenGLConsole*)console_)->Init(windowW, windowH);
+        console->AppendMessage(textLines[i]);
+    ((OpenGLConsole*)console)->Init(windowW, windowH);
     
     //Create loading thread
-    GraphicalSimulationThreadData* data = new GraphicalSimulationThreadData{*this};
+    LoadingThreadData* data = new LoadingThreadData();
+    data->app = this;
+    data->mutex = console->getLinesMutex();
     loadingThread = SDL_CreateThread(GraphicalSimulationApp::RenderLoadingScreen, "loadingThread", data);
     
     //Look for joysticks
@@ -346,7 +348,17 @@ void GraphicalSimulationApp::KeyDown(SDL_Event *event)
         case SDLK_ESCAPE:
             Quit();
             break;
-                      
+            
+        // case SDLK_SPACE:
+        //     selectedEntity = std::make_pair(nullptr, 0);
+        //     if(!getSimulationManager()->isSimulationFresh())
+        //     {
+        //         StopSimulation();
+        //         getSimulationManager()->RestartScenario();
+        //     }
+        //     StartSimulation();
+        //     break;
+            
         case SDLK_h:
             displayHUD = !displayHUD;
             break;
@@ -361,7 +373,7 @@ void GraphicalSimulationApp::KeyDown(SDL_Event *event)
 
         case SDLK_c:
             displayConsole = !displayConsole;
-            ((OpenGLConsole*)console_)->ResetScroll();
+            ((OpenGLConsole*)console)->ResetScroll();
             break;
             
         case SDLK_w: //Forward
@@ -531,7 +543,7 @@ void GraphicalSimulationApp::LoopInternal()
             case SDL_MOUSEWHEEL:
             {
                 if(displayConsole) //GUI
-                    ((OpenGLConsole*)console_)->Scroll((GLfloat)-event.wheel.y);
+                    ((OpenGLConsole*)console)->Scroll((GLfloat)-event.wheel.y);
                 else
                 {
                     //Trackball
@@ -557,7 +569,7 @@ void GraphicalSimulationApp::LoopInternal()
                 
             case SDL_QUIT:
             {
-                if(state_ == SimulationState::RUNNING)
+                if(isRunning())
                     StopSimulation();
                     
                 Quit();
@@ -566,7 +578,7 @@ void GraphicalSimulationApp::LoopInternal()
         }
     }
 
-    if(joystick != nullptr)
+    if(joystick != NULL)
     {
         for(int i=0; i<SDL_JoystickNumAxes(joystick); i++)
             joystickAxes[i] = SDL_JoystickGetAxis(joystick, i);
@@ -604,18 +616,20 @@ void GraphicalSimulationApp::LoopInternal()
     }
     mouseWasDown.type = SDL_LASTEVENT;
 
-    // Update FPS
-    uint64_t elapsedTime = GetTimeInMicroseconds() - startTime_;
-    startTime_ = GetTimeInMicroseconds();
-    double dt = std::min(elapsedTime/1000000.0 + 1e-6, 1.0); //in s, secure against large values at the beginning
-	constexpr double f = 1.0/60.0;
-	fps_ = f*(1.0/dt) + (1.0-f)*fps_;
+    //Framerate limitting (60Hz)
+    if(limitFramerate)
+    {
+        uint64_t elapsedTime = GetTimeInMicroseconds() - startTime;
+        if(elapsedTime < 16000)
+            std::this_thread::sleep_for(std::chrono::microseconds(16000 - elapsedTime));
+        startTime = GetTimeInMicroseconds();
+    }
 }
 
 void GraphicalSimulationApp::RenderLoop()
 {
     //Do some updates
-    if(state_ != SimulationState::RUNNING)
+    if(!isRunning())
     {
         getSimulationManager()->UpdateDrawingQueue();
     }
@@ -629,7 +643,7 @@ void GraphicalSimulationApp::RenderLoop()
     if(displayConsole)
     {
         gui->GenerateBackground();
-        ((OpenGLConsole*)console_)->Render(true);
+        ((OpenGLConsole*)console)->Render(true);
     }
     else
     {
@@ -681,7 +695,7 @@ void GraphicalSimulationApp::DoHUD()
     Ocean* ocn = getSimulationManager()->getOcean();
     
     GLfloat offset = 10.f;
-    gui->DoPanel(10.f, offset, 160.f, ocn != nullptr ? 226.f : 159.f);
+    gui->DoPanel(10.f, offset, 160.f, ocn != NULL ? 226.f : 159.f);
     offset += 5.f;
     gui->DoLabel(15.f, offset, "DEBUG");
     offset += 15.f;
@@ -750,7 +764,7 @@ void GraphicalSimulationApp::DoHUD()
     elev = gui->DoSlider(id, 15.f, offset, 150.f, Scalar(-10), Scalar(90), elev, "Elevation[deg]");
     offset += 61.f;
     
-    getSimulationManager()->getAtmosphere()->SetSunPosition(az, elev);
+    getSimulationManager()->getAtmosphere()->SetupSunPosition(az, elev);
     
     //Ocean settings
     if(ocn != nullptr)
@@ -943,14 +957,14 @@ void GraphicalSimulationApp::DoHUD()
     //Bottom panel
     gui->DoPanel(-10, getWindowHeight()-30.f, getWindowWidth()+20, 30.f);
     
-    std::sprintf(buf, "Drawing time: %1.2lf ms (FPS %1.0lf)", getDrawingTime(), fps_);
+    std::sprintf(buf, "Drawing time: %1.2lf (%1.2lf) ms", getDrawingTime(), getDrawingTime(true));
     gui->DoLabel(10, getWindowHeight() - 20.f, buf);
     
     std::sprintf(buf, "CPU usage: %1.0lf%%", getSimulationManager()->getCpuUsage());
-    gui->DoLabel(220, getWindowHeight() - 20.f, buf);
+    gui->DoLabel(190, getWindowHeight() - 20.f, buf);
     
     std::sprintf(buf, "Simulation time: %1.2lf s", getSimulationManager()->getSimulationTime());
-    gui->DoLabel(350, getWindowHeight() - 20.f, buf);
+    gui->DoLabel(320, getWindowHeight() - 20.f, buf);
 
     gui->DoLabel(getWindowWidth() - 100.f, getWindowHeight() - 20.f, "Hit [K] for keymap");
 
@@ -990,49 +1004,32 @@ void GraphicalSimulationApp::DoHUD()
 void GraphicalSimulationApp::StartSimulation()
 {
     SimulationApp::StartSimulation();
-
-    if (autostep_)
-    {   
-        GraphicalSimulationThreadData* data = new GraphicalSimulationThreadData{*this};
-        simulationThread = SDL_CreateThread(GraphicalSimulationApp::RunSimulation, "simulationThread", data);
-    }
+    
+    GraphicalSimulationThreadData* data = new GraphicalSimulationThreadData();
+    data->app = this;
+    data->drawingQueueMutex = glPipeline->getDrawingQueueMutex();
+    simulationThread = SDL_CreateThread(GraphicalSimulationApp::RunSimulation, "simulationThread", data);
 }
 
 void GraphicalSimulationApp::ResumeSimulation()
 {
     SimulationApp::ResumeSimulation();
     
-    if (autostep_)
-    {
-        GraphicalSimulationThreadData* data = new GraphicalSimulationThreadData{*this};
-        simulationThread = SDL_CreateThread(GraphicalSimulationApp::RunSimulation, "simulationThread", data);
-    }
+    GraphicalSimulationThreadData* data = new GraphicalSimulationThreadData();
+    data->app = this;
+    data->drawingQueueMutex = glPipeline->getDrawingQueueMutex();
+    simulationThread = SDL_CreateThread(GraphicalSimulationApp::RunSimulation, "simulationThread", data);
 }
 
 void GraphicalSimulationApp::StopSimulation()
 {
     SimulationApp::StopSimulation();
 	selectedEntity = std::make_pair(nullptr, -1);
-	trackballCenter = nullptr;
+	trackballCenter = NULL;
     
-    if (autostep_ && simulationThread != nullptr)
-    {
-        int status;
-        SDL_WaitThread(simulationThread, &status);
-        simulationThread = nullptr;
-    }
-}
-
-void GraphicalSimulationApp::StepSimulation()
-{
-    SimulationApp::StepSimulation();
-        
-    if(getGLPipeline()->isDrawingQueueEmpty())
-    {
-        SDL_LockMutex(getGLPipeline()->getDrawingQueueMutex());
-        getSimulationManager()->UpdateDrawingQueue();
-        SDL_UnlockMutex(getGLPipeline()->getDrawingQueueMutex());
-    }
+    int status;
+    SDL_WaitThread(simulationThread, &status);
+    simulationThread = NULL;
 }
 
 void GraphicalSimulationApp::CleanUp()
@@ -1040,10 +1037,10 @@ void GraphicalSimulationApp::CleanUp()
     SimulationApp::CleanUp();
     glDeleteQueries(2, timeQuery);
 
-    if(joystick != nullptr)
+    if(joystick != NULL)
         SDL_JoystickClose(0);
     
-    if(glLoadingContext != nullptr)
+    if(glLoadingContext != NULL)
         SDL_GL_DeleteContext(glLoadingContext);
     
     SDL_GL_DeleteContext(glMainContext);
@@ -1054,15 +1051,15 @@ void GraphicalSimulationApp::CleanUp()
 int GraphicalSimulationApp::RenderLoadingScreen(void* data)
 {
     //Get application
-    GraphicalSimulationApp& app = static_cast<GraphicalSimulationThreadData*>(data)->app;
+    LoadingThreadData* ltdata = (LoadingThreadData*)data;
     
     //Make drawing in this thread possible
-    SDL_GL_MakeCurrent(app.window, app.glLoadingContext);  
+    SDL_GL_MakeCurrent(ltdata->app->window, ltdata->app->glLoadingContext);  
     
     //Render loading screen
     glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
-    glScissor(0, 0, app.windowW, app.windowH);
-    glViewport(0, 0, app.windowW, app.windowH);
+    glScissor(0, 0, ltdata->app->windowW, ltdata->app->windowH);
+    glViewport(0, 0, ltdata->app->windowW, ltdata->app->windowH);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
@@ -1073,39 +1070,43 @@ int GraphicalSimulationApp::RenderLoadingScreen(void* data)
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
     
-    while(app.loading)
+    while(ltdata->app->loading)
     {
         glClear(GL_COLOR_BUFFER_BIT);
         
         //Lock to prevent adding lines to the console while rendering
-        SDL_LockMutex(app.console_->getLinesMutex());
-        static_cast<OpenGLConsole*>(app.console_)->Render(false);
-        SDL_UnlockMutex(app.console_->getLinesMutex());
+        SDL_LockMutex(ltdata->mutex);
+        ((OpenGLConsole*)ltdata->app->getConsole())->Render(false);
+        SDL_UnlockMutex(ltdata->mutex);
         
-        SDL_GL_SwapWindow(app.window);
+        SDL_GL_SwapWindow(ltdata->app->window);
     }
     
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &vao);
     
     //Detach thread from GL context
-    SDL_GL_MakeCurrent(app.window, nullptr);
+    SDL_GL_MakeCurrent(ltdata->app->window, NULL);
     return 0;
 }
 
 int GraphicalSimulationApp::RunSimulation(void* data)
 {
-    GraphicalSimulationApp& simApp = static_cast<GraphicalSimulationThreadData*>(data)->app;
-    SimulationManager* simManager = simApp.getSimulationManager();
-
-    simManager->setCallSimulationStepCompleted(simApp.timeStep_ == Scalar(0));
+    GraphicalSimulationThreadData* stdata = (GraphicalSimulationThreadData*)data;
+    SimulationManager* sim = stdata->app->getSimulationManager();
 
     int maxThreads = std::max(omp_get_max_threads()/2, 1);
     omp_set_num_threads(maxThreads);
     
-    while(simApp.getState() == SimulationState::RUNNING)
+    while(stdata->app->isRunning())
     {
-        simApp.StepSimulation();
+        sim->AdvanceSimulation();
+        if(stdata->app->getGLPipeline()->isDrawingQueueEmpty())
+        {
+            SDL_LockMutex(stdata->drawingQueueMutex);
+            sim->UpdateDrawingQueue();
+            SDL_UnlockMutex(stdata->drawingQueueMutex);
+        }
     }
     
     return 0;

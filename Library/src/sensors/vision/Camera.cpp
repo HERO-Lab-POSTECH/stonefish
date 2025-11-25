@@ -42,12 +42,12 @@ Camera::~Camera()
 {
 }
 
-Scalar Camera::getHorizontalFOV() const
+Scalar Camera::getHorizontalFOV()
 {
     return fovH;
 }
 
-void Camera::getResolution(unsigned int& x, unsigned int& y) const
+void Camera::getResolution(unsigned int& x, unsigned int& y)
 {
     x = resX;
     y = resY;
@@ -61,7 +61,7 @@ void Camera::setDisplayOnScreen(bool display, unsigned int x, unsigned int y, fl
     screenScale = scale;
 }
 
-bool Camera::getDisplayOnScreen(unsigned int& x, unsigned int& y, float& scale) const
+bool Camera::getDisplayOnScreen(unsigned int& x, unsigned int& y, float& scale)
 {
     x = screenX;
     y = screenY;

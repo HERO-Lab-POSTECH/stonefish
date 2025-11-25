@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 08/01/2019.
-//  Copyright (c) 2019-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2019-2023 Patryk Cieslak. All rights reserved.
 //
 
 #include "actuators/Servo.h"
@@ -40,7 +40,6 @@ Servo::Servo(std::string uniqueName, Scalar positionGain, Scalar velocityGain, S
     tauMax = btFabs(maxTorque);
     pSetpoint = Scalar(0);
     vSetpoint = Scalar(0);
-    vLimit = Scalar(-1); // No limit
     mode = ServoControlMode::VELOCITY;
 }
 
@@ -63,7 +62,7 @@ void Servo::setDesiredPosition(Scalar pos)
     {
         FeatherstoneJoint jnt = fe->getJoint(jId);
         if(jnt.lowerLimit < jnt.upperLimit) //Does it have joint limits?
-            pos = btClamped(pos, jnt.lowerLimit, jnt.upperLimit);
+            pos = pos < jnt.lowerLimit ? jnt.lowerLimit : (pos > jnt.upperLimit ? jnt.upperLimit : pos);
     }
     
     pSetpoint = pos;
@@ -76,18 +75,8 @@ void Servo::setDesiredVelocity(Scalar vel)
         
     if(btFuzzyZero(vel))
         pSetpoint = getPosition();
-
-    if(vLimit > Scalar(0))
-        vSetpoint = btClamped(vel, -vLimit, vLimit);
-    else
-        vSetpoint = vel;
-
-    ResetWatchdog();
-}
-
-void Servo::setMaxVelocity(Scalar vel)
-{
-    vLimit = vel;
+        
+    vSetpoint = vel;
 }
 
 void Servo::setMaxTorque(Scalar tau)
@@ -198,8 +187,6 @@ void Servo::AttachToJoint(Joint* joint)
 
 void Servo::Update(Scalar dt)
 {
-    Actuator::Update(dt);
-
     if(j != nullptr)
     {
         Scalar vSetpoint2;
@@ -207,16 +194,13 @@ void Servo::Update(Scalar dt)
         {
             Scalar err = pSetpoint - getPosition();
             vSetpoint2 = Kp * err;
-            if(vLimit > Scalar(0))
-                vSetpoint2 = btClamped(vSetpoint2, -vLimit, vLimit);
         }
         else
         {
             //vSetpoint2 = vSetpoint;
             Scalar err = vSetpoint - getVelocity();  
             vSetpoint2 = Kv * err + vSetpoint;
-            if(vLimit > Scalar(0))
-                vSetpoint2 = btClamped(vSetpoint2, -vLimit, vLimit);
+            cInfo("Velocity setpoint: %1.6lf Error: %1.6lf", vSetpoint, err);
         }
 
         switch(j->getType())
@@ -236,18 +220,8 @@ void Servo::Update(Scalar dt)
         {
             case ServoControlMode::POSITION: 
             {
-                Scalar err = pSetpoint - getPosition();
-                if(vLimit > Scalar(0)               // If velocity is limited 
-                   && btFabs(err) > vLimit * dt)    // and position error could result in crossing this limit
-                {
-                    fe->MotorPositionSetpoint(jId, Scalar(0), Scalar(0));
-                    fe->MotorVelocitySetpoint(jId, err > Scalar(0) ? vLimit : -vLimit, Kv);
-                }
-                else
-                {
-                    fe->MotorPositionSetpoint(jId, pSetpoint, Kp);
-                    fe->MotorVelocitySetpoint(jId, Scalar(0), Kv);
-                }
+                fe->MotorPositionSetpoint(jId, pSetpoint, Kp);
+                fe->MotorVelocitySetpoint(jId, Scalar(0), Kv);
             }
                 break;
                 
@@ -279,12 +253,6 @@ void Servo::Update(Scalar dt)
                 break;
         }
     }
-}
-
-void Servo::WatchdogTimeout()
-{
-    if(mode == ServoControlMode::VELOCITY)
-        setDesiredVelocity(Scalar(0));
 }
 
 }

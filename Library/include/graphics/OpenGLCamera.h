@@ -178,19 +178,19 @@ namespace sf
         void ShowAmbientOcclusion(glm::vec4 rect);
         
         //! A method that returns the projection matrix.
-        glm::mat4 GetProjectionMatrix() const override;
+        glm::mat4 GetProjectionMatrix() const;
         
         //! A method that returns the horizontal field of view.
-        GLfloat GetFOVX() const override;
+        GLfloat GetFOVX() const;
         
         //! A method that returns the vertical field of view.
-        GLfloat GetFOVY() const override;
+        GLfloat GetFOVY() const;
         
         //! A method that returns the near clip plane distance.
-        GLfloat GetNearClip() const override;
+        GLfloat GetNearClip() const;
         
         //! A method that returns the far clip plane distance.
-        GLfloat GetFarClip() const override;
+        GLfloat GetFarClip() const;
         
         //! A method to set the exposure compensation factor.
         /*!

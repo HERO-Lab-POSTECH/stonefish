@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 5/06/2017.
-//  Copyright (c) 2017-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_OpenGLContent__
@@ -76,7 +76,7 @@ namespace sf
     struct MaterialShader
     {
         std::string shadingAlgorithm;
-        std::array<GLSLShader*, 8> shaders;
+        GLSLShader* shaders[6];
 
         MaterialShader()
         {
@@ -86,7 +86,7 @@ namespace sf
         MaterialShader(const MaterialShader &obj)
         {
             shadingAlgorithm = obj.shadingAlgorithm;
-            for(size_t i=0; i<shaders.size(); ++i)
+            for(size_t i=0; i<6; ++i)
                 shaders[i] = obj.shaders[i];
         }
     };
@@ -269,22 +269,19 @@ namespace sf
          \param metalness the amount of metal look
          \param relfectivity the amount of reflection
          \param albedoTexturePath a path to the texture file specifying albedo color
-         \param normalMapPath a path to the texture file specifying surface normal (bump mapping)
-         \param temperatureMapPath a path to the texture file specifying surface temperature
-         \param temperatureRange a pair of values specifying the temperature range represented by the thermal map
+         \param normalTexturePath a path to the texture file specifying surface normal (bump mapping)
          \return the actual name of the created look
          */
         std::string CreatePhysicalLook(const std::string& name, glm::vec3 rgbColor, GLfloat roughness, GLfloat metalness = 0.f, 
-                                       GLfloat reflectivity = 0.f, const std::string& albedoTexturePath = "", const std::string& normalMapPath = "", 
-                                       const std::string& temperatureMapPath = "", glm::vec2 temperatureRange = glm::vec2(20.f));
+                                       GLfloat reflectivity = 0.f, const std::string& albedoTexturePath = "", const std::string& normalTexturePath = "");
         
         //! A method to use a look.
         /*!
-         \param look a reference to the look structure
+         \param lookId an id of the look to use
          \param texturable a flag determining if the object rendered is texturable
          \param M the model matrix
          */
-        void UseLook(const Look& look, bool texturable, const glm::mat4& M);
+        void UseLook(unsigned int lookId, bool texturable, const glm::mat4& M);
         
         //! A method returning a pointer to a view.
         /*!
@@ -314,7 +311,7 @@ namespace sf
          \param name the name of the look
          \return the id of the corresponding look structure
          */
-        int getLookId(const std::string& name);
+        int getLookId(std::string name);
 
         //! A method returning a reference to the object structure.
         /*!
@@ -331,23 +328,21 @@ namespace sf
         //! A static method to load a texture.
         /*!
          \param filename the path to the texture file
-         \param srgb a flag to indicate if the texture is in SRGB space (non-linear)
-         \param alpha a flag to indicate if the texture has transparency
+         \param hasAlphaChannel a flag to indicate if the texture has transparency
          \param anisotropy defines maximum anisotropic filtering
          \param internal a flag to indicate if the texture is an internal resource
          \return the id of the loaded texture
          */
-        static GLuint LoadTexture(const std::string& filename, bool srgb = true, bool alpha = false, GLfloat anisotropy = 0.f, bool internal = false);
+        static GLuint LoadTexture(std::string filename, bool hasAlphaChannel = false, GLfloat anisotropy = 0.f, bool internal = false);
         
         //! A static method to load an internal texture.
         /*!
          \param filename the name of the texture file
-         \param srgb a flag to indicate if the texture is in SRGB space (non-linear)
-         \param alpha a flag to indicate if the texture has transparency
+         \param hasAlphaChannel a flag to indicate if the texture has transparency
          \param anisotropy defines maximum anisotropic filtering
          \return the id of the loaded texture
          */
-        static GLuint LoadInternalTexture(const std::string& filename, bool srgb = true, bool alpha = false, GLfloat anisotropy = 0.f);
+        static GLuint LoadInternalTexture(std::string filename, bool hasAlphaChannel = false, GLfloat anisotropy = 0.f);
         
         //! A static method to generate a new texture.
         /*!
@@ -379,7 +374,7 @@ namespace sf
          \param smooth a flag to decide if model normals should be smoothed after loading
          \return a pointer to the allocated mesh structure
          */
-        static Mesh* LoadMesh(const std::string& filename, GLfloat scale, bool smooth);
+        static Mesh* LoadMesh(std::string filename, GLfloat scale, bool smooth);
         
         //! A static method to build a graphical plane object.
         /*!
@@ -457,12 +452,6 @@ namespace sf
          */
         static void TransformMesh(Mesh* mesh, const Transform& T);
         
-        //! A static method to check if normals correspond to the vertex order and fix the errors.
-        /*!
-         \param mesh a pointer to a mesh structure
-         */
-        static void CheckAndRepairFaceVertexOrder(Mesh* mesh);
-
         //! A static method to smooth the mesh normals.
         /*!
          \param mesh a pointer to a mesh structure
@@ -522,7 +511,7 @@ namespace sf
         std::vector<Object> objects; //VBAs
         std::vector<Look> looks; //OpenGL materials
         NameManager lookNameManager;
-        std::string currentLookName;
+        int currentLookId;
         bool currentTexturable;
         int currentShaderMode;
         
@@ -548,6 +537,9 @@ namespace sf
         std::map<std::string, GLSLShader*> basicShaders;
         std::vector<MaterialShader> materialShaders;
         GLSLShader* lightSourceShader[2];
+        
+        //Methods
+        void UseStandardLook(const glm::mat4& M);
     };
 }
 

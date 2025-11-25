@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 30/10/2017.
-//  Copyright (c) 2017-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/DVL.h"
@@ -199,7 +199,8 @@ void DVL::InternalUpdate(Scalar dt)
     channels[6].setStdDev(mulNoiseFactor[1] * wv.z() + addNoiseStdDev[1]);
     
     //Save data
-    Sample s{std::vector<Scalar>({v.x(), v.y(), v.z(), altitude, wv.x(), wv.y(), wv.z(), Scalar(status)})};
+    Scalar data[8] = {v.x(), v.y(), v.z(), altitude, wv.x(), wv.y(), wv.z(), Scalar(status)};
+    Sample s(8, data);
     AddSampleToHistory(s);
 }
 
@@ -325,7 +326,7 @@ Scalar DVL::getBeamAngle() const
     return beamAngle;
 }
 
-ScalarSensorType DVL::getScalarSensorType() const
+ScalarSensorType DVL::getScalarSensorType()
 {
     return ScalarSensorType::DVL;
 }

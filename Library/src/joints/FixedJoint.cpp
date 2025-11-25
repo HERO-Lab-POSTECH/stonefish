@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 2/4/13.
-//  Copyright (c) 2013-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2013-2023 Patryk Cieslak. All rights reserved.
 //
 
 #include "joints/FixedJoint.h"
@@ -34,22 +34,15 @@
 namespace sf
 {
 
-FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solid) 
-    : Joint(uniqueName, false)
+FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solid) : Joint(uniqueName, false)
 {
     btRigidBody* body = solid->rigidBody;
     
     btFixedConstraint* fixed = new btFixedConstraint(*body, Transform::getIdentity());
     setConstraint(fixed);
-
-    jSolidA = nullptr;
-    jSolidB = solid;
-
-    cInfo("Fixed joint created between the world and '%s'.", jSolidB->getName().c_str());
 }
 
-FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solidA, SolidEntity* solidB) 
-    : Joint(uniqueName, false)
+FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solidA, SolidEntity* solidB) : Joint(uniqueName, false)
 {
     btRigidBody* bodyA = solidA->rigidBody;
     btRigidBody* bodyB = solidB->rigidBody;
@@ -58,50 +51,38 @@ FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solidA, SolidEntity*
     
     btFixedConstraint* fixed = new btFixedConstraint(*bodyA, *bodyB, frameInA, frameInB);
     setConstraint(fixed);
-    
-    jSolidA = solidA;
-    jSolidB = solidB;
-
-    cInfo("Fixed joint created between '%s' and '%s'.", jSolidA->getName().c_str(), jSolidB->getName().c_str());
 }
 
-FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solid, FeatherstoneEntity* fe, int linkId) 
-    : Joint(uniqueName, false)
+FixedJoint::FixedJoint(std::string uniqueName, SolidEntity* solid, FeatherstoneEntity* fe, int linkId, const Vector3& pivot) : Joint(uniqueName, false)
 {
     Transform linkTransform = fe->getLinkTransform(linkId+1);
     Transform solidTransform = solid->getCGTransform();
-    Vector3 pivotInA = V0();
-    Vector3 pivotInB = solidTransform.inverse() * linkTransform.getOrigin();
-    Matrix3 frameInA = Matrix3::getIdentity();
+    Vector3 pivotInA = linkTransform.inverse() * pivot;
+    Vector3 pivotInB = solidTransform.inverse() * pivot;
     Matrix3 frameInB = solidTransform.getBasis().inverse() * linkTransform.getBasis();
     
-    btMultiBodyFixedConstraint* fixed = new btMultiBodyFixedConstraint(fe->getMultiBody(), linkId, solid->rigidBody, pivotInA, pivotInB, frameInA, frameInB);
+    btMultiBodyFixedConstraint* fixed = new btMultiBodyFixedConstraint(fe->getMultiBody(), linkId, solid->rigidBody, pivotInA, pivotInB, Matrix3::getIdentity(), frameInB);
     fixed->setMaxAppliedImpulse(BT_LARGE_FLOAT);
     setConstraint(fixed);
     
-    jSolidA = fe->getLink(linkId+1).solid;
-    jSolidB = solid;
-
-    cInfo("Fixed joint created between '%s' and '%s'.", jSolidA->getName().c_str(), jSolidB->getName().c_str());
+    //Disable collision
+    SimulationApp::getApp()->getSimulationManager()->DisableCollision(fe->getLink(linkId+1).solid, solid);
 }
 
-FixedJoint::FixedJoint(std::string uniqueName, FeatherstoneEntity* feA, FeatherstoneEntity* feB, int linkIdA, int linkIdB) : Joint(uniqueName, false)
+FixedJoint::FixedJoint(std::string uniqueName, FeatherstoneEntity* feA, FeatherstoneEntity* feB, int linkIdA, int linkIdB, const Vector3& pivot) : Joint(uniqueName, false)
 {
     Transform linkATransform = feA->getLinkTransform(linkIdA+1);
     Transform linkBTransform = feB->getLinkTransform(linkIdB+1);
-    Vector3 pivotInA = V0();
-    Vector3 pivotInB = linkBTransform.inverse() * linkATransform.getOrigin();
-    Matrix3 frameInA = Matrix3::getIdentity();
+    Vector3 pivotInA = linkATransform.inverse() * pivot;
+    Vector3 pivotInB = linkBTransform.inverse() * pivot;
     Matrix3 frameInB = linkBTransform.getBasis().inverse() * linkATransform.getBasis();	
     
-    btMultiBodyFixedConstraint* fixed = new btMultiBodyFixedConstraint(feA->getMultiBody(), linkIdA, feB->getMultiBody(), linkIdB, pivotInA, pivotInB, frameInA, frameInB);
+    btMultiBodyFixedConstraint* fixed = new btMultiBodyFixedConstraint(feA->getMultiBody(), linkIdA, feB->getMultiBody(), linkIdB, pivotInA, pivotInB, Matrix3::getIdentity(), frameInB);
     fixed->setMaxAppliedImpulse(BT_LARGE_FLOAT);
     setConstraint(fixed);
     
-    jSolidA = feA->getLink(linkIdA+1).solid;
-    jSolidB = feB->getLink(linkIdB+1).solid;
-
-    cInfo("Fixed joint created between '%s' and '%s'.", jSolidA->getName().c_str(), jSolidB->getName().c_str());
+    //Disable collision
+    SimulationApp::getApp()->getSimulationManager()->DisableCollision(feA->getLink(linkIdA+1).solid, feB->getLink(linkIdB+1).solid);
 }
 
 JointType FixedJoint::getType() const
@@ -109,48 +90,21 @@ JointType FixedJoint::getType() const
     return JointType::FIXED;
 }
 
-void FixedJoint::UpdateDefinition()
-{
-    if(constraint != nullptr)
-    {
-        delete constraint;
-        if(jSolidA == nullptr)
-        {
-            setConstraint(new btFixedConstraint(*jSolidB->getRigidBody(), Transform::getIdentity()));
-        }
-        else
-        {
-            Transform frameInA = Transform::getIdentity();
-            Transform frameInB = jSolidB->getCGTransform().inverse() * jSolidA->getCGTransform();
-            setConstraint(new btFixedConstraint(*jSolidA->getRigidBody(), *jSolidB->getRigidBody(), frameInA, frameInB));   
-        }        
-    }
-    else if(mbConstraint != nullptr)
-    {
-        Transform linkATransform = jSolidA->getCGTransform();
-        Transform linkBTransform = jSolidB->getCGTransform();
-        Vector3 pivotInB = linkBTransform.inverse() * linkATransform.getOrigin();
-        Matrix3 frameInB = linkBTransform.getBasis().inverse() * linkATransform.getBasis();	
-        
-        btMultiBodyFixedConstraint* fix = static_cast<btMultiBodyFixedConstraint*>(mbConstraint);
-        fix->setPivotInB(pivotInB);
-        fix->setFrameInB(frameInB);
-    }
-}
-
 std::vector<Renderable> FixedJoint::Render()
 {
     std::vector<Renderable> items(0);
-    
-    // Renderable item;
-    // item.model = glm::mat4(1.f);
-    // item.type = RenderableType::JOINT_LINES;
-    // Vector3 A = jSolidA->getCGTransform().getOrigin();
-    // Vector3 B = jSolidB->getCGTransform().getOrigin();
-    // item.points.push_back(glm::vec3(A.getX(), A.getY(), A.getZ()));
-    // item.points.push_back(glm::vec3(B.getX(), B.getY(), B.getZ()));
-    // items.push_back(item);    
-    
+    btTypedConstraint* c = getConstraint();
+    if(c != nullptr)
+    {
+        Renderable item;
+        item.model = glm::mat4(1.f);
+        item.type = RenderableType::JOINT_LINES;
+        Vector3 A = c->getRigidBodyA().getCenterOfMassPosition();
+        Vector3 B = c->getRigidBodyB().getCenterOfMassPosition();
+        item.points.push_back(glm::vec3(A.getX(), A.getY(), A.getZ()));
+        item.points.push_back(glm::vec3(B.getX(), B.getY(), B.getZ()));
+        items.push_back(item);    
+    }
     return items;
 }
 

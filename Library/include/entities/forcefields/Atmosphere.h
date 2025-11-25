@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieślak on 02/12/2018.
-//  Copyright (c) 2018-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_Atmosphere__
@@ -63,22 +63,14 @@ namespace sf
          \param latitudeDeg the home latitude [deg]
          \param utc the UTC time at home
          */
-        void SetSunPosition(Scalar longitudeDeg, Scalar latitudeDeg, std::tm& utc);
+        void SetupSunPosition(Scalar longitudeDeg, Scalar latitudeDeg, std::tm& utc);
         
         //! A method used to set the position of the sun in the sky.
         /*!
          \param azimuthDeg the sun azimuth [deg]
          \param elevationDeg the sun elevation [deg]
          */
-        void SetSunPosition(Scalar azimuthDeg, Scalar elevationDeg);
-
-        //! A method used to set the atmospheric conditions.
-        /*!
-         \param temperature the air temperature at sea level [degC]
-         \param pressure the air pressure at sea level [Pa]
-         \param humidity the air relative humidity at sea level [0-1]
-         */
-        void SetConditions(Scalar temperature, Scalar pressure, Scalar humidity);
+        void SetupSunPosition(Scalar azimuthDeg, Scalar elevationDeg);
         
         //! A method used to add a velocity field to the atmosphere.
         /*!
@@ -100,13 +92,7 @@ namespace sf
          \param elevationDeg a reference to the variable that will store the elevation of the sun [deg]
          */
         void GetSunPosition(Scalar& azimuthDeg, Scalar& elevationDeg);
-
-        //! A method returning sun directional vector.
-        /*!
-         \return sun directional vector
-         */
-        Vector3 GetSunDirection() const;
-
+        
         //! A method returning the air velocity.
         /*!
          \param point the point in the atmosphere where the velocity should be measured [m]

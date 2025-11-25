@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieślak on 20/11/2018.
-//  Copyright (c) 2018-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_VisionSensor__
@@ -31,13 +31,11 @@
 namespace sf
 {
     //! An enum defining types of vision sensors.
-    enum class VisionSensorType {COLOR_CAMERA, DEPTH_CAMERA, THERMAL_CAMERA, EVENT_BASED_CAMERA, 
-                                    OPTICAL_FLOW_CAMERA, SEGMENTATION_CAMERA, MULTIBEAM2, FLS, SSS, MSIS};
+    enum class VisionSensorType {COLOR_CAMERA, DEPTH_CAMERA, MULTIBEAM2, FLS, SSS, MSIS};
     
     class Entity;
     class StaticEntity;
     class MovingEntity;
-    class OpenGLView;
     
     //! An abstract class representing a vision sensor.
     class VisionSensor : public Sensor
@@ -89,23 +87,13 @@ namespace sf
         void setRelativeSensorFrame(const Transform& origin);
 
         //! A method returning the type of the sensor.
-        SensorType getType() const override;
+        virtual SensorType getType();
 
         //! A method returning the sensor measurement frame.
-        Transform getSensorFrame() const override;
-
-        //! A method returning the velocity of the sensor measurement frame.
-        /*!
-         \param linear output of the linear velocity of the sensor measurement frame [m/s]
-         \param angular output of the angular velocity of the sensor measurement frame [rad/s]
-         */
-        void getSensorVelocity(Vector3& linear, Vector3& angular) const override;
+        virtual Transform getSensorFrame() const;
         
         //! A method returning the type of the vision sensor.
-        virtual VisionSensorType getVisionSensorType() const = 0;
-
-        //! A method returning a pointer to the underlaying OpenGLView object.
-        virtual OpenGLView* getOpenGLView() const = 0;
+        virtual VisionSensorType getVisionSensorType() = 0;
         
     protected:
         virtual void InitGraphics() = 0;

@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2012-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2012-2023 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_SimulationManager__
@@ -119,11 +119,8 @@ namespace sf
         //! A method which restarts the simulation.
         void RestartScenario();
         
-        //! A method that steps the simulation based on real time.
+        //! A method computing the next simulation step.
         void AdvanceSimulation();
-
-        //! A method that performs on simulation step of specified period.
-        void StepSimulation(Scalar timeStep);
         
         //! A method updating the drawing queue (thread safe)
         void UpdateDrawingQueue();
@@ -161,24 +158,12 @@ namespace sf
          */
         void AddSolidEntity(SolidEntity* ent, const Transform& origin);
 
-        //! A method that removes a dynamic rigid body from the simulation world.
-        /*!
-         \param ent a pointer to the dynamic body object
-         */
-        void RemoveSolidEntity(SolidEntity* ent);
-
         //! A method that adds a rigid multibody to the simulation world.
         /*!
          \param ent a pointer to the multibody object
          \param origin a pose of the multibody base link in the world frame
          */
         void AddFeatherstoneEntity(FeatherstoneEntity* ent, const Transform& origin);
-
-        //! A method that removes a rigid multibody from the simulation world.
-        /*!
-         \param ent a pointer to the multibody object
-         */
-        void RemoveFeatherstoneEntity(FeatherstoneEntity* ent);
         
         //! A method that adds a discrete joint to the simulation world.
         /*!
@@ -261,16 +246,7 @@ namespace sf
          \param steps number steps of simulation per second
          */
         void setStepsPerSecond(Scalar steps);
-
-        //! A method to set a flag that enables automatic calling of the SimulationStepCompleted method.
-        void setCallSimulationStepCompleted(bool call);
-
-        //! A method that directly sets the fluid dynamics prescaler.
-        /*!
-         \param presc a prescaler used to compute the update frequency of fluid dynamics computations
-         */
-        void setFluidDynamicsPrescaler(unsigned int presc);
-
+        
         //! A method that sets how simulation time relates to real time.
         /*!
          \param f a multiple of real time (1.0 = real time)
@@ -319,9 +295,6 @@ namespace sf
         
         //! A method returning the current number of steps per second used.
         Scalar getStepsPerSecond() const;
-
-        //! A method returning the flag that enables automatic calling of the SimulationStepCompleted method.
-        bool getCallSimulationStepCompleted() const;
         
         //! A method returning the axis-aligned bounding box of the simulation world.
         /*!
@@ -461,11 +434,7 @@ namespace sf
         Vector3 getGravity() const;
         
         //! A method returning the simulation time in seconds.
-        /*! 
-         \param applyOffset a flag deciding if the offset between simulation time and real time should be applied
-         \return the time of simulation in seconds
-         */
-        Scalar getSimulationTime(bool applyOffset = false) const;
+        Scalar getSimulationTime() const;
         
         //! A method informing about the relation between the simulated time and real time.
         Scalar getRealtimeFactor() const;
@@ -527,13 +496,10 @@ namespace sf
          \param reflectivity how reflective the material is
          \param albedoTexturePath a path to a texture specifying albedo color
          \param normalTexturePath a path to a texture specifying surface normal (bump mapping)
-         \param temperatureTexturePath a path to a texture specifying temperature distribution
-         \param temperatureRange a range of temperatures represented by the texture values
          \return the actual name of the created look
          */
         std::string CreateLook(const std::string& name, Color color, float roughness, float metalness = 0.f, float reflectivity = 0.f, 
-                               const std::string& albedoTexturePath = "", const std::string& normalTexturePath = "", 
-                               const std::string& temperatureTexturePath = "", const std::pair<float, float>& temperatureRange = std::make_pair(20.f, 20.f));
+                               const std::string& albedoTexturePath = "", const std::string& normalTexturePath = "");
         
     protected:
         static void SolveICTickCallback(btDynamicsWorld* world, Scalar timeStep);
@@ -559,12 +525,10 @@ namespace sf
         void InitializeScenario();
         
         // State
-        Scalar simulationTime; // Time of simulation run in seconds
-        uint64_t currentTime;  // Current system time in us
-        uint64_t timeOffset;   // Offset between simulation time and system time in us
-        uint64_t ssus;         // Simulation step time in us
+        Scalar simulationTime;
+        uint64_t currentTime;
+        uint64_t ssus;
         bool simulationFresh;
-        bool callSimulationStepCompleted;
 
         // Performance
         PerformanceMonitor perfMon;

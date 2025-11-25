@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 04/08/19.
-//  Copyright (c) 2019-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2019-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_OpenGLOceanParticles__
@@ -34,7 +34,6 @@ namespace sf
 	class GLSLShader;
 	class Ocean;
     class OpenGLOcean;
-	class OpenGLView;
 
 	//! A class implementing a particle system simulating underwater snow effect.
 	class OpenGLOceanParticles : public OpenGLParticles
@@ -52,24 +51,17 @@ namespace sf
 		
 		//! A method updating the positions/velocities of the particles.
 		/*!
-         \param cam a pointer to the active view
+         \param cam a pointer to the active camera
 		 \param dt time passed since last update
          */
-		void Update(OpenGLView* view, GLfloat dt);
+		void Update(OpenGLCamera* cam, GLfloat dt);
 		
 		//! A method drawing the particles.
 		/*!
-		 \param view a pointer to the active view
+		 \param cam a pointer to the active camera
          \param glOcn a pointer to the OpenGL ocean object
 		 */
-		void Draw(OpenGLView* view, OpenGLOcean* glOcn);
-
-		//! A method drawing the segmentation id of a particles.
-		/*!
-		 \param view a pointer to the active view
-		 \param id the id of the particles
-		 */
-		void DrawId(OpenGLView* view, GLushort id);
+		void Draw(OpenGLCamera* cam, OpenGLOcean* glOcn);
 		
 		//! A method used to load particle shaders.
 		static void Init();
@@ -91,7 +83,6 @@ namespace sf
 		static GLuint noiseTexture; 
 		static GLSLShader* updateShader;
 		static GLSLShader* renderShader;
-		static GLSLShader* renderIdShader;
 	};
 }
 

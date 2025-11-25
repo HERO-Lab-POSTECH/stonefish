@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2018-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2022 Patryk Cieslak. All rights reserved.
 //
 
 #include "core/ConsoleSimulationApp.h"
@@ -34,15 +34,15 @@
 namespace sf
 {
 
-ConsoleSimulationApp::ConsoleSimulationApp(std::string title, std::string dataDirPath, SimulationManager* sim)
-: SimulationApp(title, dataDirPath, sim)
+ConsoleSimulationApp::ConsoleSimulationApp(std::string name, std::string dataDirPath, SimulationManager* sim)
+: SimulationApp(name, dataDirPath, sim)
 {
-    simulationThread = nullptr;
+    simulationThread = NULL;
 }
 
 ConsoleSimulationApp::~ConsoleSimulationApp()
 {
-    delete console_;
+    delete console;
 }
 
 bool ConsoleSimulationApp::hasGraphics()
@@ -56,8 +56,6 @@ void ConsoleSimulationApp::Init()
     cInfo("Initializing simulation:");
     InitializeSimulation();
     cInfo("Ready for running...");
-
-    state_ = SimulationState::STOPPED;
 }
 
 void ConsoleSimulationApp::LoopInternal()
@@ -69,50 +67,40 @@ void ConsoleSimulationApp::StartSimulation()
 {
     SimulationApp::StartSimulation();
     
-    if (autostep_)
-    {
-        ConsoleSimulationThreadData* data = new ConsoleSimulationThreadData{*this};
-        simulationThread = SDL_CreateThread(ConsoleSimulationApp::RunSimulation, "simulationThread", data);
-    }
+    ConsoleSimulationThreadData* data = new ConsoleSimulationThreadData();
+    data->app = this;
+    simulationThread = SDL_CreateThread(ConsoleSimulationApp::RunSimulation, "simulationThread", data);
 }
 
 void ConsoleSimulationApp::ResumeSimulation()
 {
     SimulationApp::ResumeSimulation();
     
-    if (autostep_)
-    {
-        ConsoleSimulationThreadData* data = new ConsoleSimulationThreadData{*this};
-        simulationThread = SDL_CreateThread(ConsoleSimulationApp::RunSimulation, "simulationThread", data);
-    }
+    ConsoleSimulationThreadData* data = new ConsoleSimulationThreadData();
+    data->app = this;
+    simulationThread = SDL_CreateThread(ConsoleSimulationApp::RunSimulation, "simulationThread", data);
 }
 
 void ConsoleSimulationApp::StopSimulation()
 {
     SimulationApp::StopSimulation();
     
-    if (autostep_ && simulationThread != nullptr)
-    {
-        int status;
-        SDL_WaitThread(simulationThread, &status);
-        simulationThread = nullptr;
-    }
+    int status;
+    SDL_WaitThread(simulationThread, &status);
+    simulationThread = NULL;
 }
 
 //Static
 int ConsoleSimulationApp::RunSimulation(void* data)
 {
-    ConsoleSimulationApp& simApp = static_cast<ConsoleSimulationThreadData*>(data)->app;
-    SimulationManager* simManager = simApp.getSimulationManager();
-    simManager->setCallSimulationStepCompleted(simApp.timeStep_ == Scalar(0));
+    ConsoleSimulationThreadData* stdata = (ConsoleSimulationThreadData*)data;
+    SimulationManager* sim = stdata->app->getSimulationManager();
 
     int maxThreads = std::max(omp_get_max_threads()/2, 1);
     omp_set_num_threads(maxThreads);
     
-    while(simApp.getState() == SimulationState::RUNNING)
-    {
-        simApp.StepSimulation();
-    }
+    while(stdata->app->isRunning())
+        sim->AdvanceSimulation();
 
     return 0;
 }

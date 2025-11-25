@@ -42,8 +42,6 @@
 #define MIN_INTENSITY_THRESHOLD 1.0f //Minimum light intensity to be considered [cd]
 #define STD_NEAR_PLANE_DISTANCE 0.02f //Standard near plane distance of the cameras
 #define STD_FAR_PLANE_DISTANCE 100000.f //Standard far plane distance of the cameras
-#define STD_OCEAN_PARTICLES_COUNT 5000 //Standard number of ocean particles
-#define STD_OCEAN_PARTICLES_RADIUS 3.0 //Standard size of ocean particles system
 
 //Standard texture unit bindings (OpenGL 3.x >=48; OpenGL 4.x >=80)
 #define TEX_BASE                ((GLint)0)
@@ -63,7 +61,6 @@
 #define TEX_SPOT_DEPTH          ((GLint)14)
 #define TEX_MAT_ALBEDO          ((GLint)15)
 #define TEX_MAT_NORMAL          ((GLint)16)
-#define TEX_MAT_TEMPERATURE     ((GLint)17)
 //#define TEX_POINT_SHADOW        ((GLint)X) 
 //#define TEX_POINT_DEPTH         ((GLint)X)
 
@@ -325,8 +322,32 @@ namespace sf
         bool texturable;
     };
     
+    //! An enum representing the type of look of an object.
+    enum class LookType {SIMPLE, PHYSICAL, MIRROR, TRANSPARENT};
+    
     //! An enum representing the rendering mode.
-    enum class DrawingMode {RAW, SHADOW, FLAT, FULL, UNDERWATER, TEMPERATURE};
+    enum class DrawingMode {RAW, SHADOW, FLAT, FULL, UNDERWATER};
+    
+    //! A structure containing data of a graphical material.
+    struct Look
+    {
+        std::string name;
+        LookType type;
+        glm::vec3 color;
+        std::vector<GLfloat> params;
+        GLuint albedoTexture;
+        GLuint normalTexture;
+        GLfloat reflectivity;
+
+        Look()
+        {
+            name = "";
+            type = LookType::SIMPLE;
+            color = glm::vec3(0.f);
+            albedoTexture = normalTexture = 0;
+            reflectivity = 0.f;
+        }
+    };
     
     //! A structure containing data of a view frustum.
     struct ViewFrustum
@@ -339,7 +360,7 @@ namespace sf
     };
     
     //! An enum defining supported color maps.
-    enum class ColorMap : GLint {HOT, JET, PERULA, GREEN_BLUE, ORANGE_COPPER, COLD_BLUE, GREY};
+    enum class ColorMap : int32_t {HOT, JET, PERULA, GREEN_BLUE, ORANGE_COPPER, COLD_BLUE};
 
     //! A structure representing a color system.
     struct ColorSystem
@@ -372,12 +393,6 @@ namespace sf
     {
         glm::vec3 rgb;
         
-        //! The default constructor.
-        Color()
-        {
-            rgb = glm::vec3(0.f);
-        }
-
         //! A constructor.
         /*!
          \param R red component value
@@ -387,15 +402,6 @@ namespace sf
         Color(GLfloat R, GLfloat G, GLfloat B)
         {
             rgb = glm::vec3(R,G,B);
-        }
-
-        //! A method returning the color components converted to sRGB space.
-        glm::vec3 toSRGB()
-        {
-            glm::bvec3 cutoff = glm::lessThan(rgb, glm::vec3(0.0031308f));
-            glm::vec3 higher = glm::vec3(1.055f)*glm::pow(rgb, glm::vec3(1.f/2.4f)) - glm::vec3(0.055f);
-            glm::vec3 lower = rgb * glm::vec3(12.92f);
-            return glm::mix(higher, lower, cutoff);
         }
         
         //! A static method used to create a new grayscale color.
@@ -458,36 +464,8 @@ namespace sf
     enum class RenderableType {
         SOLID = 0, SOLID_CS, MULTIBODY_AXIS,
         HYDRO_CYLINDER, HYDRO_ELLIPSOID, HYDRO_CS, HYDRO_POINTS, HYDRO_LINES, HYDRO_LINE_STRIP, HYDRO_TRIANGLES,
-        SENSOR_CS, SENSOR_LINES, SENSOR_LINE_STRIP, SENSOR_POINTS, ACTUATOR_LINES, JOINT_LINES, PATH_POINTS, PATH_LINE_STRIP,
+        SENSOR_CS, SENSOR_LINES, SENSOR_LINE_STRIP, SENSOR_POINTS, ACTUATOR_LINES, JOINT_LINES, PATH_LINE_STRIP,
         FORCE_GRAVITY, FORCE_BUOYANCY, FORCE_LINEAR_DRAG, FORCE_QUADRATIC_DRAG
-    };
-
-    //! An enum representing the type of look of an object.
-    enum class LookType {SIMPLE, PHYSICAL, MIRROR, TRANSPARENT};
-
-    //! A structure containing data of a graphical material.
-    struct Look
-    {
-        std::string name;
-        LookType type;
-        Color color;
-        std::vector<GLfloat> params;
-        GLfloat reflectivity;
-        GLuint albedoTexture;
-        GLuint normalMap;
-        GLuint temperatureMap;
-        glm::vec2 temperatureRange;
-
-        Look()
-        {
-            name = "";
-            type = LookType::SIMPLE;
-            reflectivity = 0.f;
-            albedoTexture = 0;
-            normalMap = 0;
-            temperatureMap = 0;
-            temperatureRange = glm::vec2(20.f);
-        }
     };
     
     //! A structure that represents a renderable object.
@@ -498,23 +476,8 @@ namespace sf
         int objectId;
         std::string materialName;
         glm::mat4 model;
-        glm::vec3 cor;
-        glm::vec3 vel;
-        glm::vec3 avel;
         std::vector<glm::vec3> points;
 		
-        Renderable() 
-        {
-            type = RenderableType::SOLID;
-            lookId = -1;
-            objectId = -1;
-            materialName = "";
-            model = glm::mat4(1.f);
-            cor = glm::vec3(0.f);
-            vel = glm::vec3(0.f);
-            avel = glm::vec3(0.f);
-        }
-
 		static bool SortByMaterial(const Renderable& r1, const Renderable& r2) 
 		{
 			return r1.lookId < r2.lookId;
@@ -535,7 +498,6 @@ namespace sf
         RenderQuality ocean;
         RenderQuality aa;
         RenderQuality ssr;
-        bool verticalSync;
         
         //! A constructor.
         RenderSettings()
@@ -548,7 +510,6 @@ namespace sf
             ocean = RenderQuality::MEDIUM;
             aa = RenderQuality::MEDIUM;
             ssr = RenderQuality::MEDIUM;
-            verticalSync = false;
         }
     };
     

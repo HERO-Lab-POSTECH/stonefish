@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 2/4/13.
-//  Copyright (c) 2013-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2013-2023 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_FixedJoint__
@@ -58,8 +58,9 @@ namespace sf
          \param solid a pointer to the solid body
          \param fe a pointer to the multibody
          \param linkId an index of the link of the multibody
+         \param pivot a connection point
          */
-        FixedJoint(std::string uniqueName, SolidEntity* solid, FeatherstoneEntity* fe, int linkId);
+        FixedJoint(std::string uniqueName, SolidEntity* solid, FeatherstoneEntity* fe, int linkId, const Vector3& pivot);
         
         //! A constructor to create fixed joint between two multibodies.
         /*!
@@ -68,11 +69,9 @@ namespace sf
          \param feB a pointer to the second multibody
          \param linkIdA an index of the link of the first multibody
          \param linkIdB an index of the link of the second multibody
+         \param pivot a connection point
          */
-        FixedJoint(std::string uniqueName, FeatherstoneEntity* feA, FeatherstoneEntity* feB, int linkIdA, int linkIdB);
-
-        //! A method updating the definition of the joint based on current position of bodies.
-        void UpdateDefinition();
+        FixedJoint(std::string uniqueName, FeatherstoneEntity* feA, FeatherstoneEntity* feB, int linkIdA, int linkIdB, const Vector3& pivot);
 
         //! A method implementing the rendering of the joint.
         std::vector<Renderable> Render();

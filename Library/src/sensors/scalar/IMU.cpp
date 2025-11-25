@@ -20,15 +20,13 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 06/05/2014.
-//  Copyright (c) 2014-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/IMU.h"
 
 #include "entities/MovingEntity.h"
 #include "sensors/Sample.h"
-#include "core/SimulationApp.h"
-#include "core/SimulationManager.h"
 
 namespace sf
 {
@@ -66,16 +64,11 @@ void IMU::InternalUpdate(Scalar dt)
     yaw += accumulatedYawDrift;
 
     //get acceleration
-    Vector3 R = imuTrans.getOrigin() - attach->getCGTransform().getOrigin();
-    Vector3 la = imuTrans.getBasis().inverse() * (
-                   attach->getLinearAcceleration() 
-                   + attach->getAngularAcceleration().cross(R)
-                   + attach->getAngularVelocity().cross(attach->getAngularVelocity().cross(R))
-                   - SimulationApp::getApp()->getSimulationManager()->getGravity() // Negative to get readings like in actual sensor
-                );
+    Vector3 la = imuTrans.getBasis().inverse() * (attach->getLinearAcceleration() + attach->getAngularAcceleration().cross(imuTrans.getOrigin() - attach->getCGTransform().getOrigin()));
     
     //record sample
-    Sample s{std::vector<Scalar>({roll, pitch, yaw, av.x(), av.y(), av.z(), la.x(), la.y(), la.z()})};
+    Scalar values[9] = {roll, pitch, yaw, av.x(), av.y(), av.z(), la.x(), la.y(), la.z()};
+    Sample s(9, values);
     AddSampleToHistory(s);
 }
 
@@ -115,7 +108,7 @@ void IMU::setNoise(Vector3 angleStdDev, Vector3 angularVelocityStdDev, Scalar ya
     yawDriftRate = yawAngleDrift;
 }
 
-ScalarSensorType IMU::getScalarSensorType() const
+ScalarSensorType IMU::getScalarSensorType()
 {
     return ScalarSensorType::IMU;
 }

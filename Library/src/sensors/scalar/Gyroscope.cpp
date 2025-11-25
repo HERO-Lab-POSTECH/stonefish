@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 29/03/2014.
-//  Copyright (c) 2014-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Gyroscope.h"
@@ -51,7 +51,8 @@ void Gyroscope::InternalUpdate(Scalar dt)
     omega += bias;
 
     //record sample
-    Sample s{std::vector<Scalar>({omega.x(), omega.y(), omega.z()})};
+    Scalar values[3] = {omega.x(), omega.y(), omega.z()};
+    Sample s(3, values);
     AddSampleToHistory(s);
 }
 
@@ -73,7 +74,7 @@ void Gyroscope::setNoise(Vector3 angularVelocityStdDev, Vector3 angularVelocityB
     bias = angularVelocityBias;
 }
 
-ScalarSensorType Gyroscope::getScalarSensorType() const
+ScalarSensorType Gyroscope::getScalarSensorType()
 {
     return ScalarSensorType::GYRO;
 }

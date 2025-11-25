@@ -66,8 +66,7 @@ void FLS::setRangeMax(Scalar r)
 {
     range.y = r > Scalar(range.x) ? (GLfloat)r : range.x;
     Scalar pulseTime = (Scalar(2)*range.y/SOUND_VELOCITY_WATER) * Scalar(1.1);
-    if(freq <= 0.0 || freq > Scalar(1)/pulseTime) // Limit update frequency based on range (physical limit)
-        freq = Scalar(1)/pulseTime;
+    setUpdateFrequency(Scalar(1)/pulseTime);
 }
 
 void FLS::setGain(Scalar g)
@@ -90,7 +89,7 @@ void* FLS::getImageDataPointer(unsigned int index)
     return sonarData;
 }
 
-void FLS::getDisplayResolution(unsigned int& x, unsigned int& y) const
+void FLS::getDisplayResolution(unsigned int& x, unsigned int& y)
 {
     getResolution(x, y);
     GLfloat hFactor = sinf(glm::radians((float)fovH)/2.f);
@@ -117,14 +116,9 @@ Scalar FLS::getGain() const
     return gain;
 }
     
-VisionSensorType FLS::getVisionSensorType() const
+VisionSensorType FLS::getVisionSensorType()
 {
     return VisionSensorType::FLS;
-}
-
-OpenGLView* FLS::getOpenGLView() const
-{
-    return glFLS;
 }
 
 void FLS::InitGraphics()
@@ -192,6 +186,7 @@ std::vector<Renderable> FLS::Render()
         item.type = RenderableType::SENSOR_LINES;    
         
         //Create sonar dummy
+        GLfloat iconSize = range.y;
         int div = 12;
         GLfloat fovStep = glm::radians(fovH)/(GLfloat)div;
         //Min Arcs

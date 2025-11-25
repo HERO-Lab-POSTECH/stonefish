@@ -42,8 +42,6 @@ bool OpenGLState::cullFace = false;
 GLuint OpenGLState::activeTexture = 0;
 std::vector<std::pair<GLenum, GLuint>> OpenGLState::textures = std::vector<std::pair<GLuint, GLuint>>(0);
 GLfloat OpenGLState::maxAniso = -1.f;
-GLint OpenGLState::maxTextureSize = 0;
-GLint OpenGLState::maxTextureLayers = 0;
 
 void OpenGLState::Init()
 {
@@ -53,14 +51,16 @@ void OpenGLState::Init()
     if(maxAniso < 0.f)
     {
         cInfo("Checking GPU capabilities...");
+        GLint maxTexSize;
+        GLint maxTexLayers;
         GLint maxUniforms;    
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-        glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureLayers);
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+        glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTexLayers);
         glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &maxUniforms);
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAniso);
         cInfo("Number of texture units available: %d", texUnits);
-        cInfo("Maximum texture size: %d", maxTextureSize);
-        cInfo("Maximum number of texture layers: %d", maxTextureLayers);
+        cInfo("Maximum texture size: %d", maxTexSize);
+        cInfo("Maximum number of texture layers: %d", maxTexLayers);
         cInfo("Maximum number of fragment shader uniforms: %d", maxUniforms);
         cInfo("Setting up OpenGL...");
     }
@@ -74,7 +74,7 @@ void OpenGLState::Init()
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
     glEnable(GL_DEPTH_CLAMP);
-    glPointSize(3.f);
+    glPointSize(1.f);
     glLineWidth(1.f);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindVertexArray(0);
@@ -243,11 +243,6 @@ void OpenGLState::UnbindTexture(GLuint unit)
 GLfloat OpenGLState::GetMaxAnisotropy()
 {
     return maxAniso;
-}
-
-glm::uvec3 OpenGLState::GetMaxTextureSize()
-{
-    return glm::uvec3((GLuint)maxTextureSize, (GLuint)maxTextureSize, (GLuint)maxTextureLayers);
 }
 
 OpenGLState::OpenGLState() noexcept

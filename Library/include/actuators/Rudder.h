@@ -45,8 +45,7 @@ namespace sf
          \param maxAngle the maximum angle of the rudder [rad]
          \param inverted a flag to indicate if the setpoint is inverted (positive value results in left-handed rotation)
         */
-        Rudder(std::string uniqueName, SolidEntity* rudder, Scalar area, Scalar liftCoeff, Scalar dragCoeff, Scalar stallAngle, 
-            Scalar maxAngle, bool inverted = false, Scalar maxAngularRate = Scalar(0));
+        Rudder(std::string uniqueName, SolidEntity* rudder, Scalar area, Scalar liftCoeff, Scalar dragCoeff, Scalar stallAngle, Scalar maxAngle, bool inverted = false);
         
         //! A destructor.
         ~Rudder();
@@ -82,7 +81,6 @@ namespace sf
         Scalar area;
         Scalar stallAngle;
         Scalar maxAngle;
-        Scalar maxAngularRate;
         SolidEntity* rudder;
         bool inv;
         

@@ -58,9 +58,9 @@ namespace sf
          \param verticalAngleDevDeg standard deviation of the angle measurement noise [deg]
          */
         void setNoise(Scalar rangeDev, Scalar horizontalAngleDevDeg, Scalar verticalAngleDevDeg);
-
-        //! A method that processes all messages in the rx buffer.
-        void ProcessMessages() override;
+        
+    protected:
+        void ProcessMessages();
     
     private:
         Scalar rangeRes;

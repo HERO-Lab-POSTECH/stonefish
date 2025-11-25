@@ -20,12 +20,11 @@
 //  Stonefish
 //
 //  Created by Patryk Cieślak on 26/02/2020.
-//  Copyright (c) 2020-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2020-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "comms/AcousticModem.h"
 
-#include <algorithm>
 #include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
 #include "core/SimulationApp.h"
 #include "core/SimulationManager.h"
@@ -138,11 +137,9 @@ bool AcousticModem::isReceptionPossible(Vector3 worldDir, Scalar distance)
     if(distance > range) return false;
         
     //Check if direction is in the FOV of the device
-    Vector3 dir = (getDeviceFrame().getBasis().inverse() * worldDir).normalized();
-    Scalar d = Vector3(dir.getX(), dir.getY(), Scalar(0)).safeNorm();
-    Scalar vAngle = M_PI_2; // When dir.z == 0.0
-    if(!btFuzzyZero(dir.getZ()))
-        vAngle = atan2(d, -dir.getZ());
+    Vector3 dir = (getDeviceFrame().inverse() * worldDir).normalized();
+    Scalar d = Vector3(dir.getX(), dir.getY(), Scalar(0)).length();
+    Scalar vAngle = atan2(d, dir.getZ());
     return btFabs(vAngle) >= minFov2 && btFabs(vAngle) <= maxFov2;
 }
 
@@ -167,19 +164,18 @@ CommType AcousticModem::getType() const
     return CommType::ACOUSTIC;
 }
 
-void AcousticModem::SendMessage(const std::vector<uint8_t>& data)
+void AcousticModem::SendMessage(std::string data)
 {    
-    if(getConnectedId() < 0) // Not connected
+    if(getConnectedId() < 0)
         return;
-    else if(getConnectedId() == 0) // Broadcast
+    else if(getConnectedId() == 0)
     {
         std::vector<uint64_t> nodeIds = getNodeIds();
         for(size_t i=0; i<nodeIds.size(); ++i)
-        {
             if(nodeIds[i] != getDeviceId() && mutualContact(getDeviceId(), nodeIds[i]))
             {
-                auto msg = std::make_shared<AcousticDataFrame>();
-                msg->timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime(true);
+                AcousticDataFrame* msg = new AcousticDataFrame();
+                msg->timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime();
                 msg->seq = txSeq++;
                 msg->source = getDeviceId();
                 msg->destination = nodeIds[i];
@@ -188,15 +184,14 @@ void AcousticModem::SendMessage(const std::vector<uint8_t>& data)
                 msg->travelled = Scalar(0);
                 txBuffer.push_back(msg);
             }
-        }
     }
-    else // Conneted to one receiver
+    else
     {
         if(!mutualContact(getDeviceId(), getConnectedId()))
             return;
         
-        auto msg = std::make_shared<AcousticDataFrame>();
-        msg->timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime(true);
+        AcousticDataFrame* msg = new AcousticDataFrame();
+        msg->timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime();
         msg->seq = txSeq++;
         msg->source = getDeviceId();
         msg->destination = getConnectedId();
@@ -209,41 +204,31 @@ void AcousticModem::SendMessage(const std::vector<uint8_t>& data)
 
 void AcousticModem::ProcessMessages()
 {
-    std::shared_ptr<AcousticDataFrame> msg;
-    std::string ack {"ACK"};
-    std::vector<uint8_t> ackData {ack.begin(), ack.end()};
-    std::string ping {"PING"};
-    std::vector<uint8_t> pingData {ping.begin(), ping.end()};
-
-    for(auto it = rxBuffer.begin(); it != rxBuffer.end(); ++it)
+    AcousticDataFrame* msg;
+    while((msg = (AcousticDataFrame*)ReadMessage()) != nullptr)
     {
-        // Send "ACK" message back to sender
-        msg = std::static_pointer_cast<AcousticDataFrame>(*it);
-        if(msg->data != ackData)
+        //Different responses to messages should be implemented here
+        if(msg->data != "ACK")
         {
             //timestamp and sequence don't change
-            std::shared_ptr<AcousticDataFrame> ackMsg = std::make_shared<AcousticDataFrame>();
-            ackMsg->timeStamp = msg->timeStamp;
-            ackMsg->seq = msg->seq;
-            ackMsg->destination = msg->source;
-            ackMsg->source = getDeviceId();
-            ackMsg->data = ackData;
-            ackMsg->txPosition = getDeviceFrame().getOrigin();
-            ackMsg->travelled = msg->travelled;
-            txBuffer.push_back(ackMsg);
+            msg->destination = msg->source;
+            msg->source = getDeviceId();
+            msg->data = "ACK";
+            msg->txPosition = getDeviceFrame().getOrigin();
+            txBuffer.push_back(msg);
+        }
+        else
+        {
+            delete msg;
         }
     }
-    // Remove "ACK" and "PING" messages from the RX buffer
-    rxBuffer.erase(std::remove_if(rxBuffer.begin(), rxBuffer.end(),
-        [&ackData, &pingData](const std::shared_ptr<CommDataFrame>& msg) {
-            return (msg->data == ackData || msg->data == pingData);
-        }), rxBuffer.end());
 }
 
 void AcousticModem::InternalUpdate(Scalar dt)
 {
     //Propagate messages already sent
-    for(auto mIt = propagating.begin(); mIt != propagating.end();)
+    std::map<AcousticDataFrame*, Vector3>::iterator mIt;
+    for(mIt = propagating.begin(); mIt != propagating.end(); )
     {
         AcousticModem* dest = getNode(mIt->first->destination);
         Vector3 dO = dest->getDeviceFrame().getOrigin();
@@ -270,14 +255,13 @@ void AcousticModem::InternalUpdate(Scalar dt)
     //Send first message from the tx buffer
     if(txBuffer.size() > 0)
     {
-        auto msg = std::static_pointer_cast<AcousticDataFrame>(txBuffer[0]);
-        txBuffer.pop_front();
-
-        // The message is sent or lost
+        AcousticDataFrame* msg = (AcousticDataFrame*)txBuffer[0];
         if(mutualContact(msg->source, msg->destination))
-        {
-            propagating.insert(std::make_pair(msg, msg->txPosition));
-        }
+            propagating[msg] = msg->txPosition;
+        else
+            delete msg;
+            
+        txBuffer.pop_front();
     }
 }
 
@@ -362,37 +346,11 @@ std::vector<Renderable> AcousticModem::Render()
     item.type = RenderableType::SENSOR_CS;
     items.push_back(item);
 
-    //Connected nodes
-    item.type = RenderableType::SENSOR_LINES;
-    item.model = glm::mat4(1.f);
-    item.points.clear();
-    if(getConnectedId() == 0)
-    {
-        std::vector<uint64_t> nodeIds = getNodeIds();
-        for(size_t i=0; i<nodeIds.size(); ++i)
-            if(nodeIds[i] != getDeviceId())
-            {               
-                Transform Tn = getNode(nodeIds[i])->getDeviceFrame();
-                item.points.push_back(glVectorFromVector(getDeviceFrame().getOrigin()));
-                item.points.push_back(glVectorFromVector(Tn.getOrigin()));
-            }
-    }
-    else if(getConnectedId() > 0)
-    {
-        AcousticModem* cNode = getNode(getConnectedId());
-        if(cNode != nullptr)
-        {
-            item.points.push_back(glVectorFromVector(getDeviceFrame().getOrigin()));
-            item.points.push_back(glVectorFromVector(cNode->getDeviceFrame().getOrigin()));    
-        }
-    }
-    if(!item.points.empty())
-        items.push_back(item);
-
 #ifdef DEBUG
     item.type = RenderableType::SENSOR_POINTS;
     item.model = glm::mat4(1.f);
-    for( auto mIt = propagating.begin(); mIt != propagating.end(); ++mIt)
+    std::map<AcousticDataFrame*, Vector3>::iterator mIt;
+    for(mIt = propagating.begin(); mIt != propagating.end(); ++mIt)
     {
         Vector3 mPos = mIt->second;
         item.points.push_back(glm::vec3((GLfloat)mPos.getX(), (GLfloat)mPos.getY(), (GLfloat)mPos.getZ()));

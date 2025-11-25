@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 24/05/2014.
-//  Copyright (c) 2014-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2020 Patryk Cieslak. All rights reserved.
 //
 
 #include "entities/statics/Obstacle.h"
@@ -158,8 +158,11 @@ Obstacle::Obstacle(std::string uniqueName, Scalar cylinderRadius, Scalar cylinde
     
 Obstacle::~Obstacle()
 {
-    if(graMesh != nullptr && graMesh != phyMesh)
+    if(graMesh != NULL)
+    {
+        if(graMesh == phyMesh) phyMesh = NULL;
         delete graMesh;
+    }
 }
 
 StaticEntityType Obstacle::getStaticType()
@@ -169,7 +172,7 @@ StaticEntityType Obstacle::getStaticType()
     
 void Obstacle::BuildGraphicalObject()
 {
-    if(graMesh == nullptr || !SimulationApp::getApp()->hasGraphics())
+    if(graMesh == NULL || !SimulationApp::getApp()->hasGraphics())
         return;
         
     graObjectId = ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->BuildObject(graMesh);
@@ -180,7 +183,7 @@ std::vector<Renderable> Obstacle::Render()
 {
     std::vector<Renderable> items(0);
 	
-    if(rigidBody != nullptr && isRenderable())
+    if(rigidBody != NULL && isRenderable())
     {
         Renderable item;
         item.type = RenderableType::SOLID;

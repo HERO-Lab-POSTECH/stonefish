@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 22/07/20.
-//  Copyright (c) 2020-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_OpenGLSonar__
@@ -61,32 +61,23 @@ namespace sf
         virtual void DrawLDR(GLuint destinationFBO, bool updated) = 0;
         
         //! A method returning the eye position.
-        glm::vec3 GetEyePosition() const override;
+        glm::vec3 GetEyePosition() const;
         
         //! A method returning a unit vector parallel to the optical axis of the camera.
-        glm::vec3 GetLookingDirection() const override;
+        glm::vec3 GetLookingDirection() const;
         
         //! A method returning a unit vector pointing to the top edge of the image.
-        glm::vec3 GetUpDirection() const override;
+        glm::vec3 GetUpDirection() const;
 
         //! A method returning the projection matrix.
-        glm::mat4 GetProjectionMatrix() const override;
+        glm::mat4 GetProjectionMatrix() const;
         
         //! A method returning the view matrix.
-        glm::mat4 GetViewMatrix() const override;
-
-        //! A method that returns the near clip plane distance.
-        GLfloat GetNearClip() const override;
+        glm::mat4 GetViewMatrix() const;
 
         //! A method that returns the far clip plane distance.
-        GLfloat GetFarClip() const override;
+        GLfloat GetFarClip() const;
         
-        //! A method that returns the horizontal field of view.
-        GLfloat GetFOVX() const override;
-        
-        //! A method that returns the vertical field of view.
-        GLfloat GetFOVY() const override;
-
         //! A method that sets up the sonar.
         void SetupSonar();
         
@@ -105,16 +96,16 @@ namespace sf
         void Update();
         
         //! A method that informs if the sonar needs update.
-        bool needsUpdate() override;
+        bool needsUpdate();
         
-        //! A method to set the color map used during sonar data visulization.
+        //! A method to set the color map used during sonar data visulaization.
         /*!
-         \param cm the color map to be used
+         \param cm name of the color map to be used
          */
         void setColorMap(ColorMap cm);
         
         //! A method returning the type of the view.
-        ViewType getType() const override;
+        ViewType getType();
         
         //! A static method to load shaders.
         static void Init();
@@ -133,7 +124,6 @@ namespace sf
         glm::vec3 tempUp;
         glm::mat4 projection;
         glm::vec2 range;
-        glm::vec2 fov;
         GLfloat gain;
         std::default_random_engine randGen;
         std::uniform_real_distribution<float> randDist;

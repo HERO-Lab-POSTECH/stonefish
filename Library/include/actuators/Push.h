@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 04/07/2023.
-//  Copyright (c) 2023-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2023 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_Push__
@@ -38,8 +38,9 @@ namespace sf
         /*!
          \param uniqueName a name for the push
          \param inverted a flag indicating if the direction of the generated force should be reversed
+         \param onlyWorksSubmerged a flag indicating if the actuator is simulating an underwater thruster
         */
-        Push(std::string uniqueName, bool inverted = false);
+        Push(std::string uniqueName, bool inverted = false, bool onlyWorksSubmerged = false);
         
         //! A method used to update the internal state of the push actuator.
         /*!
@@ -51,7 +52,7 @@ namespace sf
         std::vector<Renderable> Render();
         
         //! A method used to set the force limits.
-        void setForceLimits(Scalar lower, Scalar upper);
+        void setForceLimits(double lower, double upper);
 
         //! A method setting the new value of the desired force.
         /*!
@@ -61,16 +62,15 @@ namespace sf
         
         //! A method returning the current setpoint.
         Scalar getForce() const;
-
+        
         //! A method returning the type of the actuator.
         ActuatorType getType() const;
         
     private:
-        void WatchdogTimeout() override;
-
         Scalar setpoint;
+        bool underwater;
         bool inv;
-        std::pair<Scalar, Scalar> limits;
+        std::pair<double, double> limits;
     };
 }
 

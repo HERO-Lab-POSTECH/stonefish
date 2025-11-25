@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 21/10/2021.
-//  Copyright (c) 2021-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/INS.h"
@@ -74,7 +74,7 @@ void INS::Reset()
 
 void INS::InternalUpdate(Scalar dt)
 {
-    Scalar now = SimulationApp::getApp()->getSimulationManager()->getSimulationTime(true);
+    Scalar now = SimulationApp::getApp()->getSimulationManager()->getSimulationTime();
     
     //--- internal sensors
     //get sensor frame in world
@@ -85,9 +85,8 @@ void INS::InternalUpdate(Scalar dt)
     //get acceleration
     Vector3 acc = imuTrans.getBasis().inverse() * (
                    attach->getLinearAcceleration() 
-                   + attach->getAngularAcceleration().cross(R)
-                   + attach->getAngularVelocity().cross(attach->getAngularVelocity().cross(R))
-                ); // NO GRAVITY
+                   + attach->getAngularAcceleration().cross(R))
+                   + attach->getAngularVelocity().cross(attach->getAngularVelocity().cross(R));
     //get angular acceleration
     Vector3 aacc = imuTrans.getBasis().inverse() * attach->getAngularAcceleration();
 
@@ -172,11 +171,10 @@ void INS::InternalUpdate(Scalar dt)
     (imuTrans * out).getBasis().getEulerYPR(yaw, pitch, roll);
 
     //record sample
-    Sample s{std::vector<Scalar>(
-        {nedo.x(), nedo.y(), nedo.z(), altitude, latitude, longitude,
-         velo.x(), velo.y(), velo.z(), roll, pitch, yaw, 
-         avo.x(), avo.y(), avo.z(), acco.x(), acco.y(), acco.z()}
-        )};
+    Scalar values[18] = {nedo.x(), nedo.y(), nedo.z(), altitude, latitude, longitude,
+                         velo.x(), velo.y(), velo.z(), roll, pitch, yaw, 
+                         avo.x(), avo.y(), avo.z(), acco.x(), acco.y(), acco.z()};
+    Sample s(18, values);
     AddSampleToHistory(s); //Adds noise.....:(
 }
 
@@ -229,7 +227,7 @@ void INS::setNoise(Vector3 angularVelocityStdDev, Vector3 linearAccelerationStdD
     imuNoise = true;
 }
 
-ScalarSensorType INS::getScalarSensorType() const
+ScalarSensorType INS::getScalarSensorType()
 {
     return ScalarSensorType::INS;
 }

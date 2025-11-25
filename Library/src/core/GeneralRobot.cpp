@@ -62,7 +62,7 @@ Joint* GeneralRobot::getJoint(const std::string& name)
 Transform GeneralRobot::getTransform() const
 {
     if(links.size() > 0)
-        return links[0]->getOTransform();
+        return links[0]->getCGTransform();
     else
         return Transform::getIdentity();
 }

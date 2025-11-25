@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 09/11/2017.
-//  Copyright (c) 2014-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Odometry.h"
@@ -65,7 +65,8 @@ void Odometry::InternalUpdate(Scalar dt)
     Vector3 av = odomTrans.getBasis().inverse() * attach->getAngularVelocity();
     
     //Record sample
-    Sample s{std::vector<Scalar>({pos.x(), pos.y(), pos.z(), v.x(), v.y(), v.z(), orn.x(), orn.y(), orn.z(), orn.w(), av.x(), av.y(), av.z()})};
+    Scalar values[13] = {pos.x(), pos.y(), pos.z(), v.x(), v.y(), v.z(), orn.x(), orn.y(), orn.z(), orn.w(), av.x(), av.y(), av.z()};
+    Sample s(13, values);
     AddSampleToHistory(s);
 }
    
@@ -84,7 +85,7 @@ void Odometry::setNoise(Scalar positionStdDev, Scalar velocityStdDev, Scalar ang
     ornNoise = std::normal_distribution<Scalar>(Scalar(0), ornStdDev);
 }
 
-ScalarSensorType Odometry::getScalarSensorType() const
+ScalarSensorType Odometry::getScalarSensorType()
 {
     return ScalarSensorType::ODOM;
 }

@@ -57,9 +57,9 @@ namespace sf
          */
         void setNoise(Scalar timeDev, Scalar soundVelocityDev, Scalar phaseDev, Scalar baselineError, Scalar depthDev);
         
-        //! A method that processes all messages in the rx buffer.
-        void ProcessMessages() override;
-
+    protected:
+        void ProcessMessages();
+    
     private:
         Scalar CalcModel(Scalar R, Scalar theta);
 

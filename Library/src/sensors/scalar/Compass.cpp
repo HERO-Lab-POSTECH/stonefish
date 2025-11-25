@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 02/11/2017.
-//  Copyright (c) 2017-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Compass.h"
@@ -42,7 +42,7 @@ void Compass::InternalUpdate(Scalar dt)
     getSensorFrame().getBasis().getEulerYPR(yaw, pitch, roll);
     
     //record sample
-    Sample s{std::vector<Scalar>({yaw})};
+    Sample s(1, &yaw);
     AddSampleToHistory(s);
 }
 
@@ -51,7 +51,7 @@ void Compass::setNoise(Scalar headingStdDev)
     channels[0].setStdDev(btClamped(headingStdDev, Scalar(0), Scalar(BT_LARGE_FLOAT)));
 }
 
-ScalarSensorType Compass::getScalarSensorType() const
+ScalarSensorType Compass::getScalarSensorType()
 {
     return ScalarSensorType::COMPASS;
 }

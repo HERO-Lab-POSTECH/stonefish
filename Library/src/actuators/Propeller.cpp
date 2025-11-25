@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 06/05/2019.
-//  Copyright (c) 2019-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 20192023 Patryk Cieslak. All rights reserved.
 //
 
 #include "actuators/Propeller.h"
@@ -34,7 +34,7 @@
 namespace sf
 {
 
-Propeller::Propeller(std::string uniqueName, std::shared_ptr<SolidEntity> propeller, Scalar diameter, Scalar thrustCoeff, Scalar torqueCoeff, Scalar maxRPM, bool rightHand, bool inverted) : LinkActuator(uniqueName)
+Propeller::Propeller(std::string uniqueName, SolidEntity* propeller, Scalar diameter, Scalar thrustCoeff, Scalar torqueCoeff, Scalar maxRPM, bool rightHand, bool inverted) : LinkActuator(uniqueName)
 {
     D = diameter;
     kT0 = thrustCoeff;
@@ -53,8 +53,14 @@ Propeller::Propeller(std::string uniqueName, std::shared_ptr<SolidEntity> propel
     setpoint = Scalar(0);
     iError = Scalar(0);
     
-    propeller_ = propeller;
-    propeller_->BuildGraphicalObject();
+    prop = propeller;
+    prop->BuildGraphicalObject();
+}
+
+Propeller::~Propeller()
+{
+    if(prop != nullptr)
+        delete prop;
 }
 
 ActuatorType Propeller::getType() const
@@ -66,7 +72,6 @@ void Propeller::setSetpoint(Scalar s)
 {
     if(inv) s *= Scalar(-1);
     setpoint = s < Scalar(-1) ? Scalar(-1) : (s > Scalar(1) ? Scalar(1) : s);
-    ResetWatchdog();
 }
 
 Scalar Propeller::getSetpoint() const
@@ -96,8 +101,6 @@ Scalar Propeller::getTorque() const
 
 void Propeller::Update(Scalar dt)
 {
-    Actuator::Update(dt);
-
     //Update thruster velocity
     Scalar error = setpoint * omegaLim - omega;
     Scalar motorTorque = kp * error + ki * iError;
@@ -155,9 +158,9 @@ std::vector<Renderable> Propeller::Render()
     std::vector<Renderable> items(0);
     Renderable item;
     item.type = RenderableType::SOLID;
-    item.materialName = propeller_->getMaterial().name;
-    item.objectId = propeller_->getGraphicalObject();
-    item.lookId = dm == DisplayMode::GRAPHICAL ? propeller_->getLook() : -1;
+    item.materialName = prop->getMaterial().name;
+    item.objectId = prop->getGraphicalObject();
+    item.lookId = dm == DisplayMode::GRAPHICAL ? prop->getLook() : -1;
 	item.model = glMatrixFromTransform(propTrans);
     items.push_back(item);
     
@@ -169,9 +172,4 @@ std::vector<Renderable> Propeller::Render()
     return items;
 }
     
-void Propeller::WatchdogTimeout()
-{
-    setSetpoint(Scalar(0));
-}
-
 }

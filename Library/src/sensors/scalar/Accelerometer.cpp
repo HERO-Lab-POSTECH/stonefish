@@ -20,15 +20,13 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 18/11/2017.
-//  Copyright (c) 2017-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Accelerometer.h"
 
 #include "entities/MovingEntity.h"
 #include "sensors/Sample.h"
-#include "core/SimulationApp.h"
-#include "core/SimulationManager.h"
 
 namespace sf
 {
@@ -42,20 +40,15 @@ Accelerometer::Accelerometer(std::string uniqueName, Scalar frequency, int histo
 
 void Accelerometer::InternalUpdate(Scalar dt)
 {
-    // Calculate transformation from global to imu frame
+    //calculate transformation from global to imu frame
     Transform accTrans = getSensorFrame();
     
-    // Get acceleration
-    Vector3 R = accTrans.getOrigin() - attach->getCGTransform().getOrigin();
-    Vector3 la = accTrans.getBasis().inverse() * (
-                                                attach->getLinearAcceleration() 
-                                                + attach->getAngularAcceleration().cross(R)
-                                                + attach->getAngularVelocity().cross(attach->getAngularVelocity().cross(R))
-                                                - SimulationApp::getApp()->getSimulationManager()->getGravity()
-                                                );
+    //get acceleration
+    Vector3 la = accTrans.getBasis().inverse() * (attach->getLinearAcceleration() + attach->getAngularAcceleration().cross(accTrans.getOrigin() - attach->getCGTransform().getOrigin()));
     
-    // Record sample
-    Sample s{std::vector<Scalar>({la.x(), la.y(), la.z()})};
+    //record sample
+    Scalar values[3] = {la.x(), la.y(), la.z()};
+    Sample s(3, values);
     AddSampleToHistory(s);
 }
 
@@ -76,7 +69,7 @@ void Accelerometer::setNoise(Vector3 linearAccelerationStdDev)
     channels[2].setStdDev(btClamped(linearAccelerationStdDev.getZ(), Scalar(0), Scalar(BT_LARGE_FLOAT)));
 }
 
-ScalarSensorType Accelerometer::getScalarSensorType() const
+ScalarSensorType Accelerometer::getScalarSensorType()
 {
     return ScalarSensorType::ACC;
 }

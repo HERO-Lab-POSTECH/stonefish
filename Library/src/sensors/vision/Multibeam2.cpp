@@ -69,27 +69,19 @@ float* Multibeam2::getRangeDataPointer()
     return rangeData;
 }
     
-glm::vec2 Multibeam2::getRangeLimits() const
+glm::vec2 Multibeam2::getRangeLimits()
 {
     return range;
 }
 
-Scalar Multibeam2::getVerticalFOV() const
+Scalar Multibeam2::getVerticalFOV()
 {
     return fovV;
 }
 
-VisionSensorType Multibeam2::getVisionSensorType() const
+VisionSensorType Multibeam2::getVisionSensorType()
 {
     return VisionSensorType::MULTIBEAM2;
-}
-
-OpenGLView* Multibeam2::getOpenGLView() const
-{
-    if(cameras.size() > 0)
-        return cameras[0].cam;
-    else
-        return nullptr;
 }
     
 void Multibeam2::InitGraphics()

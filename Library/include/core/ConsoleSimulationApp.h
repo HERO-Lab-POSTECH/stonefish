@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2018-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_ConsoleSimulationApp__
@@ -39,23 +39,14 @@ namespace sf
     public:
         //! A constructor.
         /*!
-         \param title a title for the application
+         \param name a name for the application
          \param dataDirPath a path to the directory containing the simulation data
          \param sim a pointer to the simulation manager
          */
-        ConsoleSimulationApp(std::string title, std::string dataDirPath, SimulationManager* sim);
+        ConsoleSimulationApp(std::string name, std::string dataDirPath, SimulationManager* sim);
         
         //! A destructor.
         virtual ~ConsoleSimulationApp();
-
-        //! A method that starts the simulation on demand.
-        void StartSimulation() override;
-
-        //! A method that stops the simulation on demand.
-        void StopSimulation() override;
-
-        //! A method that resumes the simulation on demand.
-        void ResumeSimulation() override;
         
         //! A method informing if the application is graphical.
         bool hasGraphics();
@@ -63,6 +54,9 @@ namespace sf
     protected:
         void Init();
         void LoopInternal();
+        void StartSimulation();
+        void ResumeSimulation();
+        void StopSimulation();
         
     private:
         SDL_Thread* simulationThread;
@@ -70,10 +64,11 @@ namespace sf
     };
     
     //! A structure used to pass information between threads.
-    struct ConsoleSimulationThreadData
+    typedef struct
     {
-        ConsoleSimulationApp& app;
-    };
+        SimulationApp* app;
+    }
+    ConsoleSimulationThreadData;
 }
 
 #endif

@@ -58,10 +58,13 @@ namespace sf
         /*!
          \param data the data to be sent
          */
-        virtual void SendMessage(const std::vector<uint8_t>& data) override;
+        void SendMessage(std::string data);
         
-        //! A method that processes all messages in the rx buffer.
-        virtual void ProcessMessages() override;
+        //! A method performing internal comm state update.
+        /*!
+         \param dt the step time of the simulation [s]
+         */
+        virtual void InternalUpdate(Scalar dt);
         
         //! A method used to update position of the modem based on measurements from USBL or another device.
         /*!
@@ -94,18 +97,14 @@ namespace sf
         virtual CommType getType() const;
         
     protected:
-        //! A method performing internal comm state update.
-        /*!
-         \param dt the step time of the simulation [s]
-         */
-        virtual void InternalUpdate(Scalar dt) override;
+        virtual void ProcessMessages();
         
         static AcousticModem* getNode(uint64_t deviceId);
         
     private:
         bool isReceptionPossible(Vector3 dir, Scalar distance);
         
-        std::map<std::shared_ptr<AcousticDataFrame>, Vector3> propagating;
+        std::map<AcousticDataFrame*, Vector3> propagating;
         Scalar range;
         Scalar minFov2, maxFov2;
         Vector3 position;

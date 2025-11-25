@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 4/5/18.
-//  Copyright (c) 2018-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/vision/ColorCamera.h"
@@ -33,28 +33,28 @@
 namespace sf
 {
 
-ColorCamera::ColorCamera(std::string uniqueName, unsigned int resolutionX, unsigned int resolutionY, Scalar hFOVDeg, Scalar frequency, 
-    Scalar minDistance, Scalar maxDistance) : Camera(uniqueName, resolutionX, resolutionY, hFOVDeg, frequency)
+ColorCamera::ColorCamera(std::string uniqueName, unsigned int resolutionX, unsigned int resolutionY, Scalar horizFOVDeg, Scalar frequency, 
+    Scalar minDistance, Scalar maxDistance) : Camera(uniqueName, resolutionX, resolutionY, horizFOVDeg, frequency)
 {
     depthRange = glm::vec2((GLfloat)minDistance, (GLfloat)maxDistance);
-    newDataCallback = nullptr;
-    imageData = nullptr;
+    newDataCallback = NULL;
+    imageData = NULL;
 }
 
 ColorCamera::~ColorCamera()
 {
-    glCamera = nullptr;
+    glCamera = NULL;
 }
     
 void ColorCamera::setExposureCompensation(Scalar comp)
 {
-    if(glCamera != nullptr)
+    if(glCamera != NULL)
         glCamera->setExposureCompensation((GLfloat)comp);
 }
     
-Scalar ColorCamera::getExposureCompensation() const
+Scalar ColorCamera::getExposureCompensation()
 {
-    if(glCamera != nullptr)
+    if(glCamera != NULL)
         return (Scalar)glCamera->getExposureCompensation();
     else
         return Scalar(0);
@@ -65,16 +65,11 @@ void* ColorCamera::getImageDataPointer(unsigned int index)
     return imageData;
 }
 
-VisionSensorType ColorCamera::getVisionSensorType() const
+VisionSensorType ColorCamera::getVisionSensorType()
 {
     return VisionSensorType::COLOR_CAMERA;
 }
-
-OpenGLView* ColorCamera::getOpenGLView() const
-{
-    return glCamera;
-}
-
+    
 void ColorCamera::InitGraphics()
 {
     glCamera = new OpenGLRealCamera(glm::vec3(0,0,0), glm::vec3(0,0,1.f), glm::vec3(0,-1.f,0), 0, 0, resX, resY, (GLfloat)fovH, depthRange, freq < Scalar(0));
@@ -100,11 +95,11 @@ void ColorCamera::InstallNewDataHandler(std::function<void(ColorCamera*)> callba
 
 void ColorCamera::NewDataReady(void* data, unsigned int index)
 {
-    if(newDataCallback != nullptr)
+    if(newDataCallback != NULL)
     {
         imageData = (GLubyte*)data;
         newDataCallback(this);
-        imageData = nullptr;
+        imageData = NULL;
     }
 }
 

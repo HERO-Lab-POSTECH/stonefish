@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 24/05/2014.
-//  Copyright (c) 2014-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2019 Patryk Cieslak. All rights reserved.
 //
 
 #include "entities/StaticEntity.h"
@@ -42,14 +42,13 @@ StaticEntity::StaticEntity(std::string uniqueName, std::string material, std::st
         lookId = -1;
     phyObjectId = -1;
     dm = DisplayMode::GRAPHICAL;
-    rigidBody = nullptr;
-    phyMesh = nullptr;
+    rigidBody = NULL;
+    phyMesh = NULL;
 }
 
 StaticEntity::~StaticEntity()
 {
-    if(phyMesh != nullptr) 
-        delete phyMesh;
+    if(phyMesh != NULL) delete phyMesh;
 }
 
 EntityType StaticEntity::getType() const
@@ -64,7 +63,7 @@ Material StaticEntity::getMaterial() const
 
 void StaticEntity::setTransform(const Transform& trans)
 {
-    if(rigidBody != nullptr)
+    if(rigidBody != NULL)
     {
         rigidBody->getMotionState()->setWorldTransform(trans);
         rigidBody->setCenterOfMassTransform(trans);
@@ -73,7 +72,7 @@ void StaticEntity::setTransform(const Transform& trans)
 
 Transform StaticEntity::getTransform()
 {
-    if(rigidBody != nullptr)
+    if(rigidBody != NULL)
     {
         Transform T;
         rigidBody->getMotionState()->getWorldTransform(T);
@@ -90,7 +89,7 @@ btRigidBody* StaticEntity::getRigidBody()
 
 void StaticEntity::getAABB(Vector3& min, Vector3& max)
 {
-    if(rigidBody != nullptr)
+    if(rigidBody != NULL)
         rigidBody->getAabb(min, max);
 }
 
@@ -103,7 +102,7 @@ std::vector<Renderable> StaticEntity::Render()
 {
     std::vector<Renderable> items(0);
     
-    if(rigidBody != nullptr && phyObjectId >= 0 && isRenderable())
+    if(rigidBody != NULL && phyObjectId >= 0 && isRenderable())
     {
         Transform trans;
         rigidBody->getMotionState()->getWorldTransform(trans);
@@ -122,7 +121,7 @@ std::vector<Renderable> StaticEntity::Render()
 
 void StaticEntity::BuildGraphicalObject()
 {
-    if(phyMesh == nullptr || !SimulationApp::getApp()->hasGraphics())
+    if(phyMesh == NULL || !SimulationApp::getApp()->hasGraphics())
         return;
     
     phyObjectId = ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->BuildObject(phyMesh);
@@ -152,7 +151,7 @@ void StaticEntity::AddToSimulation(SimulationManager* sm)
 
 void StaticEntity::AddToSimulation(SimulationManager* sm, const Transform& origin)
 {
-    if(rigidBody != nullptr)
+    if(rigidBody != NULL)
     {
         btDefaultMotionState* motionState = new btDefaultMotionState(origin);
         rigidBody->setMotionState(motionState);

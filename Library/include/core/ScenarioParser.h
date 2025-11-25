@@ -44,7 +44,6 @@ namespace sf
     class Light;
     class Comm;
     class VelocityField;
-    class FixedJoint;
     struct Color;
     enum class ColorMap;
   
@@ -104,13 +103,6 @@ namespace sf
          \return success
          */
         virtual bool EvaluateMath(XMLNode* node);
-
-        //! A method that includes content of possibly multiple files inside the processed file.
-        /*!
-         \param node a pointer to a node
-         \return success
-         */
-        virtual bool IncludeFiles(XMLNode* node);
 
         //! A method used to parse solver configuration.
         /*!
@@ -269,9 +261,9 @@ namespace sf
         //! A method used to parse a single glue joint description.
         /*!
          \param element a pointer to the XML node
-         \return pointer to the fixed joint
+         \return success
         */
-        virtual FixedJoint* ParseGlue(XMLElement* element);
+        virtual bool ParseGlue(XMLElement* element);
         
         //! A method to get the full file path depending on the format of the passed string.
         /*!

@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 02/11/2017.
-//  Copyright (c) 2017-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/GPS.h"
@@ -52,7 +52,10 @@ void GPS::InternalUpdate(Scalar dt)
     Ocean* liq = SimulationApp::getApp()->getSimulationManager()->getOcean();
     if(liq != nullptr && liq->IsInsideFluid(gpsTrans.getOrigin()))
     {
-        Sample s{std::vector<Scalar>({BT_LARGE_FLOAT, BT_LARGE_FLOAT, Scalar(0), Scalar(0)})};
+        Scalar data[4] = {BT_LARGE_FLOAT, 
+                          BT_LARGE_FLOAT, 
+                          Scalar(0), Scalar(0)};
+        Sample s(4, data);
         AddSampleToHistory(s);
     }
     else
@@ -73,7 +76,8 @@ void GPS::InternalUpdate(Scalar dt)
         SimulationApp::getApp()->getSimulationManager()->getNED()->Ned2Geodetic(gpsPos.x(), gpsPos.y(), 0.0, latitude, longitude, height);
         
         //record sample
-        Sample s{std::vector<Scalar>({latitude, longitude, gpsPos.x(), gpsPos.y()})};
+        Scalar data[4] = {latitude, longitude, gpsPos.x(), gpsPos.y()};
+        Sample s(4, data);
         AddSampleToHistory(s);
     }
 }
@@ -84,12 +88,12 @@ void GPS::setNoise(Scalar nedDev)
     noise = std::normal_distribution<Scalar>(Scalar(0), nedStdDev);
 }
 
-Scalar GPS::getNoise() const
+Scalar GPS::getNoise()
 {
     return nedStdDev;
 }
 
-ScalarSensorType GPS::getScalarSensorType() const
+ScalarSensorType GPS::getScalarSensorType()
 {
     return ScalarSensorType::GPS;
 }

@@ -56,6 +56,12 @@ namespace sf
          */
         USBL(std::string uniqueName, uint64_t deviceId, Scalar minVerticalFOVDeg, Scalar maxVerticalFOVDeg, Scalar operatingRange);
         
+        //! A method performing internal comm state update.
+        /*!
+         \param dt the step time of the simulation [s]
+         */
+        void InternalUpdate(Scalar dt);
+        
         //! A method used to enable the auto pinging of connected transponder to monitor its position.
         /*!
          \param rate how often the ping should be sent (0 for continuous mode) [Hz]
@@ -72,12 +78,8 @@ namespace sf
         CommType getType() const;
        
     protected:
-        //! A method performing internal comm state update.
-        /*!
-         \param dt the step time of the simulation [s]
-         */
-        void InternalUpdate(Scalar dt) override;
-        
+        virtual void ProcessMessages() = 0;
+
         bool ping;
         Scalar pingRate;
         Scalar pingTime;

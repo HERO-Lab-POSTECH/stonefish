@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 04/05/18.
-//  Copyright (c) 2018-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2020 Patryk Cieslak. All rights reserved.
 //
 
 #include "graphics/OpenGLDepthCamera.h"
@@ -36,8 +36,8 @@
 namespace sf
 {
 
-GLSLShader** OpenGLDepthCamera::depthCameraOutputShader = nullptr;
-GLSLShader* OpenGLDepthCamera::depthVisualizeShader = nullptr;
+GLSLShader** OpenGLDepthCamera::depthCameraOutputShader = NULL;
+GLSLShader* OpenGLDepthCamera::depthVisualizeShader = NULL;
 
 OpenGLDepthCamera::OpenGLDepthCamera(glm::vec3 eyePosition, glm::vec3 direction, glm::vec3 cameraUp,
                                      GLint originX, GLint originY, GLint width, GLint height,
@@ -48,7 +48,7 @@ OpenGLDepthCamera::OpenGLDepthCamera(glm::vec3 eyePosition, glm::vec3 direction,
     _needsUpdate = false;
     continuous = continuousUpdate;
     newData = false;
-    camera = nullptr;
+    camera = NULL;
     noiseDepth = 0.f;
     idx = 0;
     range.x = minDepth;
@@ -59,20 +59,20 @@ OpenGLDepthCamera::OpenGLDepthCamera(glm::vec3 eyePosition, glm::vec3 direction,
     SetupCamera(eyePosition, direction, cameraUp);
     UpdateTransform();
     
-    fov.x = horizontalFOVDeg/180.f*M_PI;
+    GLfloat fovx = horizontalFOVDeg/180.f*M_PI;
     
     if(verticalFOVDeg > 0.f)
     {
-        fov.y = verticalFOVDeg/180.f*M_PI;
-        projection[0] = glm::vec4(range.x/(range.x*tanf(fov.x/2.f)), 0.f, 0.f, 0.f);
-        projection[1] = glm::vec4(0.f, range.x/(range.x*tanf(fov.y/2.f)), 0.f, 0.f);
+        GLfloat fovy = verticalFOVDeg/180.f*M_PI;
+        projection[0] = glm::vec4(range.x/(range.x*tanf(fovx/2.f)), 0.f, 0.f, 0.f);
+        projection[1] = glm::vec4(0.f, range.x/(range.x*tanf(fovy/2.f)), 0.f, 0.f);
         projection[2] = glm::vec4(0.f, 0.f, -(range.y + range.x)/(range.y-range.x), -1.f);
         projection[3] = glm::vec4(0.f, 0.f, -2.f*range.y*range.x/(range.y-range.x), 0.f);
     }
     else
     {
-        fov.y = 2.f * atanf( (GLfloat)viewportHeight/(GLfloat)viewportWidth * tanf(fov.x/2.f) );
-        projection = glm::perspectiveFov(fov.y, (GLfloat)viewportWidth, (GLfloat)viewportHeight, range.x, range.y);
+        GLfloat fovy = 2.f * atanf( (GLfloat)viewportHeight/(GLfloat)viewportWidth * tanf(fovx/2.f) );
+        projection = glm::perspectiveFov(fovy, (GLfloat)viewportWidth, (GLfloat)viewportHeight, range.x, range.y);
     }
     
     //Render depth
@@ -123,7 +123,7 @@ OpenGLDepthCamera::~OpenGLDepthCamera()
     glDeleteTextures(1, &linearDepthTex);
     glDeleteFramebuffers(1, &linearDepthFBO);
 
-    if(camera != nullptr)
+    if(camera != NULL)
     {
         glDeleteBuffers(1, &linearDepthPBO);
     }
@@ -188,24 +188,9 @@ glm::mat4 OpenGLDepthCamera::GetViewMatrix() const
     return cameraTransform;
 }
 
-GLfloat OpenGLDepthCamera::GetNearClip() const
-{
-    return range.x;
-}
-
 GLfloat OpenGLDepthCamera::GetFarClip() const
 {
     return range.y;
-}
-
-GLfloat OpenGLDepthCamera::GetFOVX() const
-{
-    return fov.x;
-}
-        
-GLfloat OpenGLDepthCamera::GetFOVY() const
-{
-    return fov.y;
 }
 
 void OpenGLDepthCamera::Update()
@@ -240,7 +225,7 @@ void OpenGLDepthCamera::setNoise(GLfloat depthStdDev)
     noiseDepth = depthStdDev;
 }
 
-ViewType OpenGLDepthCamera::getType() const
+ViewType OpenGLDepthCamera::getType()
 {
     return ViewType::DEPTH_CAMERA;
 }
@@ -309,7 +294,7 @@ void OpenGLDepthCamera::DrawLDR(GLuint destinationFBO, bool updated)
     bool display = true;
     unsigned int dispX, dispY;
     GLfloat dispScale;
-    if(camera != nullptr)
+    if(camera != NULL)
         display = camera->getDisplayOnScreen(dispX, dispY, dispScale);
     
     //Draw on screen
@@ -318,13 +303,11 @@ void OpenGLDepthCamera::DrawLDR(GLuint destinationFBO, bool updated)
         if(usesRanges) Depth2LinearRanges();
         else LinearizeDepth();
         
-        int windowHeight = ((GraphicalSimulationApp*)SimulationApp::getApp())->getWindowHeight();
-        
         //Bind depth texture
         OpenGLState::BindTexture(TEX_POSTPROCESS1, GL_TEXTURE_2D, linearDepthTex);
         //LDR drawing
         OpenGLState::BindFramebuffer(destinationFBO);
-        OpenGLState::Viewport(dispX, windowHeight-viewportHeight*dispScale-dispY, viewportWidth*dispScale, viewportHeight*dispScale);
+        OpenGLState::Viewport(originX, originY, viewportWidth, viewportHeight);
         depthVisualizeShader->Use();
         depthVisualizeShader->SetUniform("texLinearDepth", TEX_POSTPROCESS1);
         depthVisualizeShader->SetUniform("range", range);
@@ -336,7 +319,7 @@ void OpenGLDepthCamera::DrawLDR(GLuint destinationFBO, bool updated)
     }
     
     //Copy texture to camera buffer
-    if(camera != nullptr && updated)
+    if(camera != NULL && updated)
     {
         if(!display)
         {
@@ -375,13 +358,13 @@ void OpenGLDepthCamera::Init()
 
 void OpenGLDepthCamera::Destroy()
 {
-    if(depthCameraOutputShader != nullptr) 
+    if(depthCameraOutputShader != NULL) 
     {
-        if(depthCameraOutputShader[0] != nullptr) delete depthCameraOutputShader[0];
-        if(depthCameraOutputShader[1] != nullptr) delete depthCameraOutputShader[1];
+        if(depthCameraOutputShader[0] != NULL) delete depthCameraOutputShader[0];
+        if(depthCameraOutputShader[1] != NULL) delete depthCameraOutputShader[1];
         delete [] depthCameraOutputShader;
     }
-    if(depthVisualizeShader != nullptr) delete depthVisualizeShader;
+    if(depthVisualizeShader != NULL) delete depthVisualizeShader;
 }
 
 }

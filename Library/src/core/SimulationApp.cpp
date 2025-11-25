@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2012-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2012-2022 Patryk Cieslak. All rights reserved.
 //
 
 #include "core/SimulationApp.h"
@@ -31,12 +31,16 @@
 namespace sf
 {
 
-SimulationApp::SimulationApp(std::string title, std::string dataDirPath, SimulationManager* sim)
-    : console_{new Console()}, startTime_{0}, autostep_{true}, timeStep_{Scalar(0)}, state_{SimulationState::NOT_READY},
-      simManager_{sim}, title_{title}, dataPath_{dataDirPath}, physicsTime_{0.0}
+SimulationApp::SimulationApp(std::string name, std::string dataDirPath, SimulationManager* sim)
 {
     SimulationApp::handle = this;
-
+	appName = name;
+    dataPath = dataDirPath;
+    simulation = sim;
+    finished = false;
+    running = false;
+    physicsTime = 0.0;
+    console = new Console();
     //Version info
     if(STONEFISH_VER_PATCH != 0)
         cInfo("Welcome to Stonefish %d.%d.%d", STONEFISH_VER_MAJOR, STONEFISH_VER_MINOR, STONEFISH_VER_PATCH);
@@ -47,37 +51,42 @@ SimulationApp::SimulationApp(std::string title, std::string dataDirPath, Simulat
 SimulationApp::~SimulationApp()
 {
     if(SimulationApp::handle == this)
-        SimulationApp::handle = nullptr;
-}
-
-SimulationState SimulationApp::getState() const
-{
-    return state_;
+        SimulationApp::handle = NULL;
 }
 
 SimulationManager* SimulationApp::getSimulationManager()
 {
-    return simManager_;
+    return simulation;
 }
 
 double SimulationApp::getPhysicsTime()
 {
-    return physicsTime_;
+    return physicsTime;
+}
+
+bool SimulationApp::isRunning()
+{
+	return running;
+}
+
+bool SimulationApp::hasFinished()
+{
+	return finished;
 }
 
 std::string SimulationApp::getDataPath()
 {
-    return dataPath_;
+    return dataPath;
 }
 
 std::string SimulationApp::getName()
 {
-	return title_;
+	return appName;
 }
 
 Console* SimulationApp::getConsole()
 {
-    return console_;
+    return console;
 }
 
 void SimulationApp::Init()
@@ -87,17 +96,14 @@ void SimulationApp::Init()
 void SimulationApp::InitializeSimulation()
 {
     cInfo("Building scenario...");
-    simManager_->RestartScenario();
+    simulation->RestartScenario();
     cInfo("Synchronizing motion states...");
-    simManager_->getDynamicsWorld()->synchronizeMotionStates();
+    simulation->getDynamicsWorld()->synchronizeMotionStates();
     cInfo("Simulation initialized -> using Bullet Physics %d.%d.", btGetVersion()/100, btGetVersion()%100);
 }
 
-void SimulationApp::Run(bool autostart, bool autostep, Scalar timeStep)
+void SimulationApp::Run(bool autostart)
 {
-    autostep_ = autostep;
-    timeStep_ = timeStep < Scalar(0) ? Scalar(0) : timeStep;
-
     Init();
     if(autostart) StartSimulation();
 	Loop();
@@ -106,46 +112,33 @@ void SimulationApp::Run(bool autostart, bool autostep, Scalar timeStep)
 
 void SimulationApp::Loop()
 {
-    startTime_ = GetTimeInMicroseconds();
-    while(state_ != SimulationState::FINISHED)
+    startTime = GetTimeInMicroseconds();
+    while(!finished)
         LoopInternal();
 }
 
 void SimulationApp::StartSimulation()
 {
-    simManager_->StartSimulation();
-    state_ = SimulationState::RUNNING;
+    simulation->StartSimulation();
+    running = true;
 }
 
 void SimulationApp::ResumeSimulation()
 {
-    simManager_->ResumeSimulation();
-    state_ = SimulationState::RUNNING;
+    simulation->ResumeSimulation();
+    running = true;
 }
 
 void SimulationApp::StopSimulation()
 {
-    simManager_->StopSimulation();
-	state_ = SimulationState::STOPPED;
-    physicsTime_ = 0.f;
-}
-
-void SimulationApp::StepSimulation()
-{
-    if (timeStep_ == Scalar(0)) // Real time simulation
-    {
-        simManager_->AdvanceSimulation();
-    }
-    else // Fixed step simulation
-    {   
-        simManager_->StepSimulation(timeStep_);
-        simManager_->SimulationStepCompleted(timeStep_);
-    }
+    simulation->StopSimulation();
+	running = false;
+    physicsTime = 0.f;
 }
 
 void SimulationApp::Quit()
 {
-    state_ = SimulationState::FINISHED;
+    finished = true;
 }
 
 void SimulationApp::CleanUp()

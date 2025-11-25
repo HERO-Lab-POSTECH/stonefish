@@ -48,7 +48,7 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        void InternalUpdate(Scalar dt) override;
+        void InternalUpdate(Scalar dt);
         
         //! A method used to attach the sensor to a DC motor.
         /*!
@@ -57,20 +57,10 @@ namespace sf
         void AttachToMotor(DCMotor* m);
         
         //! A method returning the type of the sensor.
-        SensorType getType() const override;
-
-        //! A method returning the current sensor frame in world.
-        Transform getSensorFrame() const override;
-
-        //! A method returning the velocity of the sensor measurement frame.
-        /*!
-         \param linear output of the linear velocity of the sensor measurement frame [m/s]
-         \param angular output of the angular velocity of the sensor measurement frame [rad/s]
-         */
-        void getSensorVelocity(Vector3& linear, Vector3& angular) const override;
+        SensorType getType();
         
         //! A method returning the type of the scalar sensor.
-        ScalarSensorType getScalarSensorType() const override;
+        ScalarSensorType getScalarSensorType();
         
     private:
         DCMotor* motor;

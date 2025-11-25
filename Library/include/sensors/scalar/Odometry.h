@@ -46,7 +46,7 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        void InternalUpdate(Scalar dt) override;
+        void InternalUpdate(Scalar dt);
         
         //! A method used to set the noise characteristics of the sensor.
         /*!
@@ -58,7 +58,7 @@ namespace sf
         void setNoise(Scalar positionStdDev, Scalar velocityStdDev, Scalar angleStdDev, Scalar angularVelocityStdDev);
         
         //! A method returning the type of the scalar sensor.
-        ScalarSensorType getScalarSensorType() const override;
+        ScalarSensorType getScalarSensorType();
 
     private:
         //Custom noise generation

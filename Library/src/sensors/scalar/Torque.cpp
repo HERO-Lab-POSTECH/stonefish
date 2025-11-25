@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 20/03/2018.
-//  Copyright (c) 2018-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Torque.h"
@@ -46,7 +46,9 @@ void Torque::InternalUpdate(Scalar dt)
     if(fe != NULL)
     {
         Scalar tau = fe->getMotorForceTorque(jId);
-        Sample s{std::vector<Scalar>({tau})};
+    
+        Scalar values[1] = {tau};
+        Sample s(1, values);
         AddSampleToHistory(s);
     }
 }
@@ -62,7 +64,7 @@ void Torque::setNoise(Scalar torqueStdDev)
     channels[0].setStdDev(btClamped(torqueStdDev, Scalar(0), Scalar(BT_LARGE_FLOAT)));
 }
 
-ScalarSensorType Torque::getScalarSensorType() const
+ScalarSensorType Torque::getScalarSensorType()
 {
     return ScalarSensorType::TORQUE;
 }

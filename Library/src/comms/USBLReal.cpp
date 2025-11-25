@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieślak on 21/12/2020.
-//  Copyright (c) 2020-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2020-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "comms/USBLReal.h"
@@ -49,14 +49,10 @@ void USBLReal::setNoise(Scalar timeDev, Scalar soundVelocityDev, Scalar phaseDev
 
 void USBLReal::ProcessMessages()
 {
-    std::shared_ptr<AcousticDataFrame> msg;
-    std::string ack {"ACK"};
-    std::vector<uint8_t> ackData(ack.begin(), ack.end());
-    
-    for(auto it = rxBuffer.begin(); it != rxBuffer.end(); ++it)
+    AcousticDataFrame* msg;
+    while((msg = (AcousticDataFrame*)ReadMessage()) != nullptr)
     {
-        msg = std::static_pointer_cast<AcousticDataFrame>(*it);
-        if(msg->data == ackData)
+        if(msg->data == "ACK")
         {  
             //Get message data
             AcousticModem* cNode = getNode(msg->source);
@@ -101,10 +97,9 @@ void USBLReal::ProcessMessages()
             
             newDataAvailable = true;
         }
+        
+        delete msg;
     }
-
-    // Standard processing of messages and removal of "ACK and "PING" messages
-    AcousticModem::ProcessMessages();
 }
 
 Scalar USBLReal::CalcModel(Scalar R, Scalar theta)

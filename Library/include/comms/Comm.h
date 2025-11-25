@@ -33,7 +33,7 @@
 namespace sf
 {
     //! An enum defining types of comms.
-    enum class CommType {RADIO, ACOUSTIC, USBL, OPTICAL};
+    enum class CommType {RADIO, ACOUSTIC, USBL, VLC};
     
     struct Renderable;
     class Entity;
@@ -46,7 +46,7 @@ namespace sf
         uint64_t seq;
         uint64_t source;
         uint64_t destination;
-        std::vector<uint8_t> data;
+        std::string data;
     };
     
     //! An abstract class representing a communication device.
@@ -69,18 +69,17 @@ namespace sf
          */
         void Connect(uint64_t deviceId);
         
-        //! Methods used to send a message.
+        //! A method used to send a message.
         /*!
          \param data the data to be sent
          */
-        virtual void SendMessage(const std::string& data);
-        virtual void SendMessage(const std::vector<uint8_t>& data);
+        virtual void SendMessage(std::string data);
         
-        //! A method to read received data frames. 
+        //! A method to read received data frames. The data frame has to be destroyed manually. 
         /*!
          \return a pointer to the data frame
          */
-        std::shared_ptr<CommDataFrame> ReadMessage();
+        CommDataFrame* ReadMessage();
                 
         //! A method used to attach the comm device to the world origin.
         /*!
@@ -111,9 +110,6 @@ namespace sf
          */
         void Update(Scalar dt);
         
-        //! A method that processes all messages in the rx buffer.
-        virtual void ProcessMessages();
-    
         //! A method used to mark data as old.
         void MarkDataOld();
         
@@ -125,12 +121,6 @@ namespace sf
         
         //! A method to set if the comm is renderable.
         void setRenderable(bool render);
-
-        //! A method returning the number of messages in the rx buffer.
-        size_t getRxBufferCount() const;
-
-        //! A method returning the number of messages in the tx buffer.
-        size_t getTxBufferCount() const;
         
         //! A method returning the current comm device frame in world.
         Transform getDeviceFrame();
@@ -144,22 +134,24 @@ namespace sf
         //! A method returning the comm name.
         std::string getName();
         
-        //! A method returning the type of the comm.
-        virtual CommType getType() const = 0;
-        
-    protected:
         //! A method performing an internal update of the comm state.
         /*!
          \param dt the time step of the simulation [s]
          */
         virtual void InternalUpdate(Scalar dt) = 0;
-
-        //! A method used for data reception.
-        virtual void MessageReceived(std::shared_ptr<CommDataFrame> message);
         
+        //! A method returning the type of the comm.
+        virtual CommType getType() const = 0;
+        
+    protected:
+        //! A method used for data reception.
+        void MessageReceived(CommDataFrame* message);
+        //! A method to proccess received messages.
+        virtual void ProcessMessages() = 0;
+    
         bool newDataAvailable;
-        std::deque<std::shared_ptr<CommDataFrame>> txBuffer;
-        std::deque<std::shared_ptr<CommDataFrame>> rxBuffer;
+        std::deque<CommDataFrame*> txBuffer;
+        std::deque<CommDataFrame*> rxBuffer;
         uint64_t txSeq;
         
     private:

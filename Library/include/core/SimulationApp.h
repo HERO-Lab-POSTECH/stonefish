@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2012-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2012-2022 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_SimulationApp__
@@ -37,14 +37,6 @@
 
 namespace sf
 {
-    enum class SimulationState 
-    {
-        NOT_READY,
-        STOPPED,
-        RUNNING,
-        FINISHED,
-    };
-
     class SimulationManager;
     
     //! An abstract class that defines an application interface hosting a simulation manager.
@@ -53,43 +45,35 @@ namespace sf
     public:
         //! A constructor.
         /*!
-         \param title a title for the application
+         \param name a name for the application
          \param dataDirPath a path to the directory containing simulation data
          \param sim a pointer to the simulation manager
          */
-        SimulationApp(std::string title, std::string dataDirPath, SimulationManager* sim);
+        SimulationApp(std::string name, std::string dataDirPath, SimulationManager* sim);
         
         //! A destructor.
         virtual ~SimulationApp();
         
         //! A method implementing the simulation sequence.
         /*!
-         \param autostart optional flag determining if the simulation should automatically start running
-         \param autostep optional flag determining if the simulation should automatically step
-         \param timeStep optional time step that will be used for each simulation update instead of real time (0 means real time)
+         \param autostart a flag determining if the simulation should automatically start running
          */
-        void Run(bool autostart = true, bool autostep = true, Scalar timeStep = Scalar(0));
+        void Run(bool autostart = true);
         
-        // ! A method that starts the simulation on demand.
-        virtual void StartSimulation();
+        //! A method informing if the application is graphical.
+        virtual bool hasGraphics() = 0;
         
-        //! A method that stops the simulation on demand.
-        virtual void StopSimulation();
-
-        //! A method that resumes the simulation on demand.
-        virtual void ResumeSimulation();
-
-        //! A method that performs a single simulation step and necessary updates.
-        virtual void StepSimulation();
-        
-        //! A method returning simulation state.
-        SimulationState getState() const;
-
         //! A method returning a pointer to the simulation manager.
         SimulationManager* getSimulationManager();
         
         //! A method returning the physics computation time.
         double getPhysicsTime();
+        
+        //! A method informing if the simulation is running.
+        bool isRunning();
+
+        //! A method informing if the simulation has finished.
+        bool hasFinished();
           
         //! A method returning the path to the directory containing simulation data.
         std::string getDataPath();
@@ -99,9 +83,6 @@ namespace sf
         
         //! A method returning a pointer to the console associated with the application.
         Console* getConsole();
-
-        //! A method informing if the application is graphical.
-        virtual bool hasGraphics() = 0;
         
         //! A static method returning the pointer to the currently running application.
         static SimulationApp* getApp();
@@ -115,18 +96,20 @@ namespace sf
         virtual void Quit();
         
         virtual void InitializeSimulation();
+        virtual void StartSimulation();
+        virtual void ResumeSimulation();
+        virtual void StopSimulation();
         
-        Console* console_;
-        uint64_t startTime_;
-        bool autostep_;
-        Scalar timeStep_;
-        SimulationState state_;
-
+        Console* console;
+        uint64_t startTime;
+        
     private:
-        SimulationManager* simManager_;
-        std::string title_;
-        std::string dataPath_;
-        double physicsTime_;
+        SimulationManager* simulation;
+        std::string appName;
+        std::string dataPath;
+        bool finished;
+        bool running;
+        double physicsTime;
         
         static SimulationApp* handle;
     };

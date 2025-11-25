@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2012-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2012-2023 Patryk Cieslak. All rights reserved.
 //
 
 #include "core/SimulationManager.h"
@@ -92,10 +92,8 @@ SimulationManager::SimulationManager(Scalar stepsPerSecond, SolverType st, Colli
     angSleepThreshold = Scalar(0);
     fdCounter = 0;
     currentTime = 0;
-    timeOffset = 0;
     simulationTime = 0;
     mlcpFallbacks = 0;
-    callSimulationStepCompleted = true;
     dynamicsWorld = nullptr;
     mbSolver = nullptr;
     sbSolver = nullptr;
@@ -179,42 +177,14 @@ void SimulationManager::AddSolidEntity(SolidEntity* ent, const Transform& origin
     }
 }
 
-void SimulationManager::RemoveSolidEntity(SolidEntity* ent)
-{
-    if(ent != nullptr)
-    {
-        auto it = std::find(entities.begin(), entities.end(), ent);
-        if(it != entities.end() && (*it)->getType() == EntityType::SOLID)
-        {
-            SolidEntity* solid = static_cast<SolidEntity*>(*it);
-            solid->RemoveFromSimulation(this);
-            entities.erase(it);
-        }
-    }
-}
-
-void SimulationManager::AddFeatherstoneEntity(FeatherstoneEntity* ent, const Transform& origin)
-{
-    if(ent != nullptr)
-    {
-        entities.push_back(ent);
-        ent->AddToSimulation(this, origin);
-    }
-}
-
-void SimulationManager::RemoveFeatherstoneEntity(FeatherstoneEntity* ent)
-{
-    if(ent != nullptr)
-    {
-        auto it = std::find(entities.begin(), entities.end(), ent);
-        if(it != entities.end() && (*it)->getType() == EntityType::FEATHERSTONE)
-        {
-            FeatherstoneEntity* fe = static_cast<FeatherstoneEntity*>(*it);
-            fe->RemoveFromSimulation(this);
-            entities.erase(it);
-        }
-    }
-}
+ void SimulationManager::AddFeatherstoneEntity(FeatherstoneEntity* ent, const Transform& origin)
+ {
+     if(ent != nullptr)
+     {
+         entities.push_back(ent);
+         ent->AddToSimulation(this, origin);
+     }
+ }
     
 void SimulationManager::EnableOcean(Scalar waves, Fluid f)
 {
@@ -527,17 +497,11 @@ bool SimulationManager::isSimulationFresh() const
     return simulationFresh;
 }
 
-Scalar SimulationManager::getSimulationTime(bool applyOffset) const
+Scalar SimulationManager::getSimulationTime() const
 {
-    // Thread safe access to simulation time
     SDL_LockMutex(simInfoMutex);
     Scalar st = simulationTime;
     SDL_UnlockMutex(simInfoMutex);
-    
-    // Apply time offset in seconds
-    if(applyOffset)
-        st += timeOffset/(Scalar)1e6;
-
     return st;
 }
 
@@ -580,16 +544,10 @@ void SimulationManager::setStepsPerSecond(Scalar steps)
     SDL_LockMutex(simSettingsMutex);
     sps = steps;
     ssus = (uint64_t)(1000000.0/steps);
-    setFluidDynamicsPrescaler((unsigned int)round(sps/Scalar(50)));
+    fdPrescaler = (unsigned int)round(sps/Scalar(50));
+    fdPrescaler = fdPrescaler == 0 ? 1 : fdPrescaler;
+    //fdPrescaler = 1; //TESTING
     SDL_UnlockMutex(simSettingsMutex);
-}
-
-void SimulationManager::setFluidDynamicsPrescaler(unsigned int presc)
-{
-    if(presc == 0)
-        fdPrescaler = 1;
-    else
-        fdPrescaler = presc;
 }
 
 void SimulationManager::setRealtimeFactor(Scalar f)
@@ -597,18 +555,6 @@ void SimulationManager::setRealtimeFactor(Scalar f)
     SDL_LockMutex(simInfoMutex);
     realtimeFactor = f;
     SDL_UnlockMutex(simInfoMutex);
-}
-
-void SimulationManager::setCallSimulationStepCompleted(bool call)
-{
-    SDL_LockMutex(simSettingsMutex);
-    callSimulationStepCompleted = call;
-    SDL_UnlockMutex(simSettingsMutex);
-}
-
-bool SimulationManager::getCallSimulationStepCompleted() const
-{
-    return callSimulationStepCompleted;
 }
 
 Scalar SimulationManager::getStepsPerSecond() const
@@ -872,12 +818,7 @@ void SimulationManager::RestartScenario()
     BuildScenario(); //Defined by specific application
     
     if(SimulationApp::getApp()->hasGraphics())
-    {    
-        if(isOceanEnabled())
-            ocean->getOpenGLOcean()->AllocateParticles(((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->getView(0));
-
         ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->Finalize();
-    }
 
     simulationFresh = true;
 }
@@ -1072,9 +1013,7 @@ void SimulationManager::AdvanceSimulation()
     if(currentTime == 0) //Start of simulation
     {
         deltaTime = 0.0;
-        simulationTime = 0.0;
         currentTime = getSimulationClock();
-        timeOffset = currentTime;
         return;
     }
 
@@ -1090,27 +1029,21 @@ void SimulationManager::AdvanceSimulation()
         currentTime = timeInMicroseconds;
     }
     
-    StepSimulation((Scalar)deltaTime/Scalar(1000000.0));
-    
+    //Step simulation
+    SDL_LockMutex(simSettingsMutex);
+    perfMon.PhysicsStarted();
+    dynamicsWorld->stepSimulation((Scalar)deltaTime/Scalar(1000000.0), 1000000, (Scalar)ssus/Scalar(1000000.0));
+    perfMon.PhysicsFinished();
+    SDL_UnlockMutex(simSettingsMutex);
+
     SDL_LockMutex(simInfoMutex);
     Scalar cpuUsageNow = (Scalar)perfMon.getPhysicsTime()/(Scalar)deltaTime * Scalar(100);
     Scalar filter(0.001);
     cpuUsage = filter * cpuUsageNow + (Scalar(1)-filter) * cpuUsage;   
-    SDL_UnlockMutex(simInfoMutex);
-}
-
-void SimulationManager::StepSimulation(Scalar timeStep)
-{
-    SDL_LockMutex(simSettingsMutex);
-    perfMon.PhysicsStarted();
-    dynamicsWorld->stepSimulation((Scalar)timeStep, 1000000, (Scalar)ssus/Scalar(1000000.0));
-    perfMon.PhysicsFinished();
-    SDL_UnlockMutex(simSettingsMutex);
-
+    
     //Inform about MLCP failures
     if(solver != SolverType::SOLVER_SI)
     {
-        SDL_LockMutex(simInfoMutex);
         btMultiBodyMLCPConstraintSolver* mlcp = (btMultiBodyMLCPConstraintSolver*)mbSolver;
         int numFallbacks = mlcp->getNumFallbacks();
         if(numFallbacks)
@@ -1121,8 +1054,9 @@ void SimulationManager::StepSimulation(Scalar timeStep)
             cWarning("MLCP solver failed %d times.\n", mlcpFallbacks);
 #endif
         }
-        SDL_UnlockMutex(simInfoMutex);
     }
+    
+    SDL_UnlockMutex(simInfoMutex);
 }
 
 void SimulationManager::SimulationStepCompleted(Scalar timeStep)
@@ -1222,12 +1156,10 @@ bool SimulationManager::SetMaterialsInteraction(const std::string& firstMaterial
     return getMaterialManager()->SetMaterialsInteraction(firstMaterialName, secondMaterialName, staticFricCoeff, dynamicFricCoeff);
 }
 
-std::string SimulationManager::CreateLook(const std::string& name, Color color, float roughness, float metalness, float reflectivity, 
-    const std::string& albedoTexturePath, const std::string& normalTexturePath, const std::string& temperatureTexturePath, const std::pair<float, float>& temperatureRange)
+std::string SimulationManager::CreateLook(const std::string& name, Color color, float roughness, float metalness, float reflectivity, const std::string& albedoTexturePath, const std::string& normalTexturePath)
 {
     if(SimulationApp::getApp()->hasGraphics())
-        return ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->CreatePhysicalLook(name, color.rgb, roughness, metalness, reflectivity, 
-            albedoTexturePath, normalTexturePath, temperatureTexturePath, glm::vec2(temperatureRange.first, temperatureRange.second));
+        return ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->CreatePhysicalLook(name, color.rgb, roughness, metalness, reflectivity, albedoTexturePath, normalTexturePath);
     else
         return "";
 }
@@ -1655,10 +1587,6 @@ void SimulationManager::SimulationPostTickCallback(btDynamicsWorld *world, Scala
     for(size_t i = 0; i < simManager->comms.size(); ++i)
         simManager->comms[i]->Update(timeStep);
     
-    // Loop through all comms again to process messages (there can be a cross-influence between updates)
-    for(size_t i = 0; i < simManager->comms.size(); ++i)
-        simManager->comms[i]->ProcessMessages();
-    
     //Loop through contact manifolds -> update contacts
     if(simManager->getContact(0) != nullptr) // If at least one contact is defined
     {
@@ -1680,8 +1608,7 @@ void SimulationManager::SimulationPostTickCallback(btDynamicsWorld *world, Scala
     simManager->simulationTime += timeStep;
     
     //Optional method to update some post simulation data (like ROS messages...)
-    if (simManager->getCallSimulationStepCompleted())
-        simManager->SimulationStepCompleted(timeStep);
+    simManager->SimulationStepCompleted(timeStep);
 }
 
 //Used to save contact information, including contact forces

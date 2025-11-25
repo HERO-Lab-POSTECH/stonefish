@@ -70,10 +70,10 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        void InternalUpdate(Scalar dt) override;
+        void InternalUpdate(Scalar dt);
         
         //! A method updating the transform of the multibeam.
-        void UpdateTransform() override;
+        void UpdateTransform();
         
         //! A method used to setup the OpenGL depth camera transformation (not applicable).
         /*!
@@ -81,7 +81,7 @@ namespace sf
          \param dir a unit vector parallel to the optical axis of the camera
          \param up a unit vector pointing up (from center of image to the top edge of the image)
          */
-        void SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up) override;
+        void SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up);
         
         //! A method used to setup a specified OpenGL depth camera transformation.
         /*!
@@ -96,7 +96,7 @@ namespace sf
         /*!
          \param index the id of the OpenGL depth camera uploading the data
          */
-        void NewDataReady(void* data, unsigned int index = 0) override;
+        void NewDataReady(void* data, unsigned int index = 0);
         
         //! A method used to set a callback function called when new data is available.
         /*!
@@ -108,10 +108,10 @@ namespace sf
         std::vector<Renderable> Render();
         
         //! A method that returns the limits of measured range.
-        glm::vec2 getRangeLimits() const;
+        glm::vec2 getRangeLimits();
         
         //! A method that returns the vertical field of view of the sensor.
-        Scalar getVerticalFOV() const;
+        Scalar getVerticalFOV();
         
         //! A method returning a pointer to the image data.
         /*!
@@ -124,10 +124,7 @@ namespace sf
         float* getRangeDataPointer();
         
         //! A method returning the type of the vision sensor.
-        VisionSensorType getVisionSensorType() const override;
-
-        //! A method returning a pointer to the underlaying OpenGLView object.
-        OpenGLView* getOpenGLView() const override;
+        VisionSensorType getVisionSensorType();
         
     private:
         void InitGraphics();

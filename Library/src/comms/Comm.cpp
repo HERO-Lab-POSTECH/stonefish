@@ -86,16 +86,6 @@ void Comm::MarkDataOld()
     newDataAvailable = false;
 }
 
-size_t Comm::getRxBufferCount() const
-{
-    return rxBuffer.size();
-}
-
-size_t Comm::getTxBufferCount() const
-{
-    return txBuffer.size();
-}
-
 bool Comm::isNewDataAvailable()
 {
     return newDataAvailable;
@@ -116,28 +106,25 @@ void Comm::Connect(uint64_t deviceId)
     cId = deviceId;
 }
 
-void Comm::SendMessage(const std::string& data)
-{
-    SendMessage(std::vector<uint8_t>(data.begin(), data.end()));
-}
-
-void Comm::SendMessage(const std::vector<uint8_t>& data)
+void Comm::SendMessage(std::string data)
 {
     if(cId > 0)
     {
-        auto msg = std::make_shared<CommDataFrame>();
+        CommDataFrame* msg = new CommDataFrame();
         msg->seq = txSeq++;
         msg->source = id;
         msg->destination = cId;
-        msg->timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime(true);
+        msg->timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime();
         msg->data = data;
         txBuffer.push_back(msg);
     }
+    else
+        return;
 }
 
-std::shared_ptr<CommDataFrame> Comm::ReadMessage()
+CommDataFrame* Comm::ReadMessage()
 {
-    std::shared_ptr<CommDataFrame> msg {nullptr};
+    CommDataFrame* msg = nullptr;
     if(rxBuffer.size() > 0)
     {
         msg = rxBuffer[0];
@@ -146,13 +133,9 @@ std::shared_ptr<CommDataFrame> Comm::ReadMessage()
     return msg;
 }
 
-void Comm::MessageReceived(std::shared_ptr<CommDataFrame> message)
+void Comm::MessageReceived(CommDataFrame* message)
 {
     rxBuffer.push_back(message);
-}
-
-void Comm::ProcessMessages()
-{
 }
 
 void Comm::AttachToWorld(const Transform& origin)
@@ -181,6 +164,7 @@ void Comm::AttachToSolid(MovingEntity* body, const Transform& origin)
 void Comm::Update(Scalar dt)
 {
     SDL_LockMutex(updateMutex);
+    ProcessMessages();
     InternalUpdate(dt);
     SDL_UnlockMutex(updateMutex);
 }

@@ -34,7 +34,7 @@ uniform float gain;
 uniform vec3 noiseSeed;
 uniform vec2 noiseStddev;
 
-vec2 binHistogram[N_BINS];
+vec3 binHistogram[N_BINS]; // .x = intensity, .y = range, .z = valid flag
 
 #inject "gaussianNoise.glsl"
 
@@ -51,8 +51,8 @@ void main()
 
     if(gl_GlobalInvocationID.x < viewBeams)
     {
-        for(uint i=0; i<N_BINS; ++i) //Initialize histogram buffer (x=minRange, y=maxIntensity)
-            binHistogram[i] = vec2(1e10, 0.0);
+        for(uint i=0; i<N_BINS; ++i) //Initialize histogram buffer
+            binHistogram[i] = vec3(0.0, range.y + 1.0, 0.0); // intensity, sentinel range, invalid flag
 
         ivec3 sampleCoord;
         sampleCoord.x = int(gl_GlobalInvocationID.x);
@@ -67,17 +67,18 @@ void main()
             if(rangeIntensity.x < range.x || rangeIntensity.x >= range.y) //Outside valid range?
                 continue;
 
-            //Compute bin and keep brightest sample
+            //Compute bin and select best sample (closest range, then highest intensity)
             float factor = float(i)/(float(N_BEAM_SAMPLES-1));
             uint bin = uint(floor((rangeIntensity.x - range.x)/range.z));
-            float intensity = rangeIntensity.y * smoothstep(0.0, 0.2, factor) * (1.0 - smoothstep(0.8, 1.0, factor)); //Lobe intensity correction
+            float weightedIntensity = rangeIntensity.y * smoothstep(0.0, 0.2, factor) * (1.0 - smoothstep(0.8, 1.0, factor)); //Lobe intensity correction
 
-            //Keep closest sample, or if same distance prefer brighter sample
-            if(rangeIntensity.x < binHistogram[bin].x ||
-               (abs(rangeIntensity.x - binHistogram[bin].x) < 0.01 && intensity > binHistogram[bin].y))
+            // Priority: 1) Closest range first, 2) Highest intensity if range is equal
+            if(binHistogram[bin].z == 0.0 || rangeIntensity.x < binHistogram[bin].y ||
+               (abs(rangeIntensity.x - binHistogram[bin].y) < 0.001 && weightedIntensity > binHistogram[bin].x))
             {
-                binHistogram[bin].x = rangeIntensity.x;
-                binHistogram[bin].y = intensity;
+                binHistogram[bin].x = weightedIntensity;
+                binHistogram[bin].y = rangeIntensity.x;
+                binHistogram[bin].z = 1.0; // Mark as valid
             }
         }
 
@@ -86,13 +87,13 @@ void main()
         noiseCoord.x = float(sampleCoord.x*(sampleCoord.z+1))/float(viewBeams * (inDim.z+1));
         float mulNoise = gaussian(noiseCoord.xx, noiseSeed, noiseStddev.x, 1.0);
         uint globalBeam = gl_GlobalInvocationID.x + beams.x * gl_GlobalInvocationID.y;
-        
+
         for(uint i=0; i<N_BINS; ++i)
         {
             noiseCoord.y = i/float(N_BINS-1);
             float data = gain * gaussian(-noiseCoord.xy, noiseSeed, noiseStddev.y, 0.0); //Additive noise (Gaussian background noise)
-            if(binHistogram[i].x < 1e10) //Valid sample exists
-                data += gain * binHistogram[i].y * mulNoise; //Brightest sample + multiplicative noise
+            if(binHistogram[i].z > 0.0) // Check valid flag instead of count
+                data += gain * binHistogram[i].x * mulNoise; //Signal + multiplicative noise (Gaussian beam gain noise)
             //data += data * rand(vec2(noiseSeed.x * i, noiseSeed.x * globalBeam)) * 0.5; // Speckle noise (Uniform multiplicative noise)
             imageStore(sonarOutput, ivec2(globalBeam, N_BINS-1-i), vec4(data));
         }

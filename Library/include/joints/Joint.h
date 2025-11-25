@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 1/13/13.
-//  Copyright (c) 2013-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2013-2023 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_Joint__
@@ -36,7 +36,6 @@ namespace sf
     
     struct Renderable;
     class SimulationManager;
-    class SolidEntity;
     
     //! An abstract class implementing a general joint.
     class Joint
@@ -56,13 +55,13 @@ namespace sf
         /*!
          \param sm a pointer to the simulation manager
          */
-        virtual void AddToSimulation(SimulationManager* sm);
+        void AddToSimulation(SimulationManager* sm);
 
         //! A method used to remove joint from the simulation.
         /*!
          \param sm a pointer to the simulation manager
          */
-        virtual void RemoveFromSimulation(SimulationManager* sm);
+        void RemoveFromSimulation(SimulationManager* sm);
         
         //! A method applying damping to the joint.
         virtual void ApplyDamping();
@@ -95,24 +94,16 @@ namespace sf
         
         //! A method that informs if the joint is of multibody type.
         bool isMultibodyJoint();
-
-        //! A method returning the first body affected by the joint.
-        SolidEntity* getSolidA();
-
-        //! A method returning the second body affected by the joint.
-        SolidEntity* getSolidB();
         
     protected:
         void setConstraint(btTypedConstraint* c);
         void setConstraint(btMultiBodyConstraint* c);
-        SolidEntity* jSolidA;
-        SolidEntity* jSolidB;
-        btTypedConstraint* constraint;
-        btMultiBodyConstraint* mbConstraint;
-
+        
     private:
         std::string name;
         bool collisionEnabled;
+        btTypedConstraint* constraint;
+        btMultiBodyConstraint* mbConstraint;
     };
 }
 

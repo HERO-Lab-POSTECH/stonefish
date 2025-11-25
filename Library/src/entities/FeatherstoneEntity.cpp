@@ -116,23 +116,7 @@ void FeatherstoneEntity::AddToSimulation(SimulationManager* sm, const Transform&
     
     //Resize matrices
     multiBody->finalizeMultiDof();
-
-    //Apply solver settings
-    multiBody->setAngularDamping(sm->getDynamicsWorld()->getSolverInfo().m_damping);
-    multiBody->setLinearDamping(sm->getDynamicsWorld()->getSolverInfo().m_damping);
     
-    //Add multibody to the world
-    Respawn(origin);
-    sm->getDynamicsWorld()->addMultiBody(multiBody);
-}
-
-void FeatherstoneEntity::RemoveFromSimulation(SimulationManager* sm)
-{
-    sm->getDynamicsWorld()->removeMultiBody(multiBody);
-}
-
-void FeatherstoneEntity::Respawn(const Transform& origin)
-{
     //Set origin position
     setBaseTransform(origin);
     multiBody->setBaseVel(Vector3(0,0,0));
@@ -155,16 +139,14 @@ void FeatherstoneEntity::Respawn(const Transform& origin)
     btAlignedObjectArray<Vector3> scratchM;
     multiBody->forwardKinematics(scratchQ, scratchM);
     multiBody->updateCollisionObjectWorldTransforms(scratchQ, scratchM);
+    
+    //Add multibody to the world
+    sm->getDynamicsWorld()->addMultiBody(multiBody);
 }
 
 void FeatherstoneEntity::setSelfCollision(bool enabled)
 {
     multiBody->setHasSelfCollision(enabled);
-}
-
-bool FeatherstoneEntity::hasSelfCollision() const
-{
-    return multiBody->hasSelfCollision();
 }
 
 void FeatherstoneEntity::setDisplayMode(DisplayMode m)

@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 30/10/2017.
-//  Copyright (c) 2017-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2017-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/ForceTorque.h"
@@ -75,7 +75,8 @@ void ForceTorque::InternalUpdate(Scalar dt)
         force = toSensor * force;
         torque = toSensor * torque;
 	
-        Sample s{std::vector<Scalar>({force.getX(), force.getY(), force.getZ(), torque.getX(), torque.getY(), torque.getZ()})};
+        Scalar values[6] = {force.getX(), force.getY(), force.getZ(), torque.getX(), torque.getY(), torque.getZ()};
+        Sample s(6, values);
         AddSampleToHistory(s);
     }
     else
@@ -88,7 +89,8 @@ void ForceTorque::InternalUpdate(Scalar dt)
         torque = toSensor * torque;
         lastFrame = fe->getLink(childId).solid->getCGTransform() * lastFrame; //From local to global
         
-        Sample s{std::vector<Scalar>({force.getX(), force.getY(), force.getZ(), torque.getX(), torque.getY(), torque.getZ()})};
+        Scalar values[6] = {force.getX(), force.getY(), force.getZ(), torque.getX(), torque.getY(), torque.getZ()};
+        Sample s(6, values);
         AddSampleToHistory(s);
     }
 }
@@ -133,7 +135,7 @@ std::vector<Renderable> ForceTorque::Render()
     return items;
 }
 
-ScalarSensorType ForceTorque::getScalarSensorType() const
+ScalarSensorType ForceTorque::getScalarSensorType()
 {
     return ScalarSensorType::FT;
 }

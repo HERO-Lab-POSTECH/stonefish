@@ -1,2 +1,23 @@
-build
-docker/.env
+# Build directories
+build/
+cmake-build-*/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.so
+*.a
+
+# Python
+__pycache__/
+*.pyc
+
+# Backup
+*.backup
+.git.backup/

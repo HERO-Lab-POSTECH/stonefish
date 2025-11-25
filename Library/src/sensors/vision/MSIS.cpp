@@ -93,8 +93,7 @@ void MSIS::setRangeMax(Scalar r)
 {
     range.y = r > Scalar(range.x) ? (GLfloat)r : range.x;
     Scalar pulseTime = (Scalar(2)*range.y/SOUND_VELOCITY_WATER) * Scalar(1.1);
-    if(freq <= 0.0 || freq > Scalar(1)/pulseTime) // Limit update frequency based on range (physical limit)
-        freq = Scalar(1)/pulseTime;
+    setUpdateFrequency(Scalar(1)/pulseTime);
 }
 
 void MSIS::setGain(Scalar g)
@@ -117,7 +116,7 @@ void* MSIS::getImageDataPointer(unsigned int index)
     return sonarData;
 }
 
-void MSIS::getDisplayResolution(unsigned int& x, unsigned int& y) const
+void MSIS::getDisplayResolution(unsigned int& x, unsigned int& y)
 {
     getResolution(x, y);
     x = y; //numOfBins x numOfBins
@@ -144,11 +143,6 @@ int MSIS::getCurrentRotationStep() const
     return currentStep;
 }
 
-GLuint MSIS::getCurrentBeamIndex() const
-{
-    return (GLuint)(currentStep + (GLint)(resX/2));
-}
-
 Scalar MSIS::getRangeMin() const
 {
     return Scalar(range.x);
@@ -164,14 +158,9 @@ Scalar MSIS::getGain() const
     return gain;
 }
     
-VisionSensorType MSIS::getVisionSensorType() const
+VisionSensorType MSIS::getVisionSensorType()
 {
     return VisionSensorType::MSIS;
-}
-
-OpenGLView* MSIS::getOpenGLView() const
-{
-    return glMSIS;
 }
 
 void MSIS::InitGraphics()

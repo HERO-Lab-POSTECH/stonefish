@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieślak on 02/12/2018.
-//  Copyright (c) 2018-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2020 Patryk Cieslak. All rights reserved.
 //
 
 #include "entities/forcefields/Atmosphere.h"
@@ -43,7 +43,7 @@ Atmosphere::Atmosphere(std::string uniqueName, Fluid g) : ForcefieldEntity(uniqu
     
     gas = g;
     wind = std::vector<VelocityField*>(0);
-    glAtmosphere = nullptr;
+    glAtmosphere = NULL;
 }
     
 Atmosphere::~Atmosphere()
@@ -55,7 +55,7 @@ Atmosphere::~Atmosphere()
         wind.clear();
     }
     
-    if(glAtmosphere != nullptr) 
+    if(glAtmosphere != NULL) 
         delete glAtmosphere;
 }
     
@@ -79,9 +79,9 @@ void Atmosphere::InitGraphics(const RenderSettings& s)
     glAtmosphere = new OpenGLAtmosphere(GetShaderPath() + "earth_atm.dat", s.shadows);
 }
 
-void Atmosphere::SetSunPosition(Scalar longitudeDeg, Scalar latitudeDeg, std::tm& utc)
+void Atmosphere::SetupSunPosition(Scalar longitudeDeg, Scalar latitudeDeg, std::tm& utc)
 {
-    if(glAtmosphere == nullptr) return;
+    if(glAtmosphere == NULL) return;
     
     Scalar latitude = latitudeDeg/Scalar(180) * M_PI;
     Scalar longitude = longitudeDeg/Scalar(180) * M_PI;
@@ -99,19 +99,11 @@ void Atmosphere::SetSunPosition(Scalar longitudeDeg, Scalar latitudeDeg, std::tm
     glAtmosphere->SetSunPosition((float)(azimuth/M_PI*Scalar(180)), (float)(elevation/M_PI*Scalar(180)));
 }
     
-void Atmosphere::SetSunPosition(Scalar azimuthDeg, Scalar elevationDeg)
+void Atmosphere::SetupSunPosition(Scalar azimuthDeg, Scalar elevationDeg)
 {
-    if(glAtmosphere == nullptr) return;
+    if(glAtmosphere == NULL) return;
     
     glAtmosphere->SetSunPosition((float)azimuthDeg, (float)elevationDeg);
-}
-
-void Atmosphere::SetConditions(Scalar temperature, Scalar pressure, Scalar humidity)
-{
-    if(glAtmosphere == nullptr) return;
-    
-    glAtmosphere->setAirTemperature((float)temperature);
-    glAtmosphere->setAirHumidity((float)humidity); 
 }
 
 void Atmosphere::AddVelocityField(VelocityField* field)
@@ -121,7 +113,7 @@ void Atmosphere::AddVelocityField(VelocityField* field)
     
 void Atmosphere::GetSunPosition(Scalar &azimuthDeg, Scalar &elevationDeg)
 {
-    if(glAtmosphere == nullptr)
+    if(glAtmosphere == NULL)
         azimuthDeg = elevationDeg = btScalar(0);
     else
     {
@@ -129,17 +121,6 @@ void Atmosphere::GetSunPosition(Scalar &azimuthDeg, Scalar &elevationDeg)
         glAtmosphere->GetSunPosition(az, elev);
         azimuthDeg = Scalar(az);
         elevationDeg = Scalar(elev);
-    }
-}
-
-Vector3 Atmosphere::GetSunDirection() const
-{
-    if(glAtmosphere == nullptr)
-        return Vector3(0,0,0);
-    else
-    {
-        glm::vec3 dir = glAtmosphere->GetSunDirection();
-        return Vector3(dir.x, dir.y, dir.z);
     }
 }
 

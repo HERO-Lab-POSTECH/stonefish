@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 09/06/2014.
-//  Copyright (c) 2014-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2018 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Current.h"
@@ -33,24 +33,13 @@ namespace sf
 
 Current::Current(std::string uniqueName, Scalar frequency, int historyLength) : ScalarSensor(uniqueName, frequency, historyLength)
 {
-    motor = nullptr;
+    motor = NULL;
     channels.push_back(SensorChannel("Current", QuantityType::CURRENT));
-}
-
-Transform Current::getSensorFrame() const
-{
-    return I4();
-}
-
-void Current::getSensorVelocity(Vector3& linear, Vector3& angular) const
-{
-    linear = V0();
-    angular = V0();
 }
 
 void Current::AttachToMotor(DCMotor* m)
 {
-    if(m != nullptr)
+    if(m != NULL)
         motor = m;
 }
 
@@ -58,20 +47,20 @@ void Current::InternalUpdate(Scalar dt)
 {
     //read current
     Scalar current = Scalar(0);
-    if(motor != nullptr)
+    if(motor != NULL)
         current = motor->getCurrent();
     
     //record sample
-    Sample s{std::vector<Scalar>({current})};
+    Sample s(1, &current);
     AddSampleToHistory(s);
 }
 
-SensorType Current::getType() const
+SensorType Current::getType()
 {
     return SensorType::OTHER;
 }
 
-ScalarSensorType Current::getScalarSensorType() const
+ScalarSensorType Current::getScalarSensorType()
 {
     return ScalarSensorType::CURRENT;
 }

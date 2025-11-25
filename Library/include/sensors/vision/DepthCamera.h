@@ -43,12 +43,12 @@ namespace sf
          \param uniqueName a name for the sensor
          \param resolutionX the horizontal resolution [pix]
          \param resolutionY the vertical resolution[pix]
-         \param hFOVDeg the horizontal field of view [deg]
+         \param horizontalFOVDeg the horizontal field of view [deg]
          \param minDepth the minimum measured depth [m]
          \param maxDepth the maximum measured depth [m]
          \param frequency the sampling frequency of the sensor [Hz] (-1 if updated every simulation step)
          */
-        DepthCamera(std::string uniqueName, unsigned int resolutionX, unsigned int resolutionY, Scalar hFOVDeg,
+        DepthCamera(std::string uniqueName, unsigned int resolutionX, unsigned int resolutionY, Scalar horizontalFOVDeg,
                     Scalar minDepth, Scalar maxDepth, Scalar frequency = Scalar(-1));
        
         //! A destructor.
@@ -58,7 +58,7 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        void InternalUpdate(Scalar dt) override;
+        void InternalUpdate(Scalar dt);
         
         //! A method used to setup the OpenGL camera transformation.
         /*!
@@ -66,13 +66,13 @@ namespace sf
          \param dir a unit vector parallel to the optical axis of the camera
          \param up a unit vector pointing up (from center of image to the top edge of the image)
          */
-        void SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up) override;
+        void SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up);
         
         //! A method used to inform about new data.
         /*!
          \param index the id of the OpenGL camera uploading the data
          */
-        void NewDataReady(void* data, unsigned int index = 0) override;
+        void NewDataReady(void* data, unsigned int index = 0);
         
         //! A method used to set a callback function called when new data is available.
         /*!
@@ -87,7 +87,7 @@ namespace sf
         void setNoise(float depthStdDev);
 
         //! A method returning the depth range of the camera.
-        glm::vec2 getDepthRange() const;
+        glm::vec2 getDepthRange();
         
         //! A method returning the pointer to the image data.
         /*!
@@ -97,10 +97,7 @@ namespace sf
         void* getImageDataPointer(unsigned int index = 0);
         
         //! A method returning the type of the vision sensor.
-        VisionSensorType getVisionSensorType() const override;
-
-        //! A method returning a pointer to the underlaying OpenGLView object.
-        OpenGLView* getOpenGLView() const override;
+        VisionSensorType getVisionSensorType();
         
     private:
         void InitGraphics();

@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieślak on 20/11/2018.
-//  Copyright (c) 2018-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2021 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_ScalarSensor__
@@ -97,7 +97,16 @@ namespace sf
         
         //! A destructor.
         virtual ~ScalarSensor();
-            
+        
+        //! A method performing internal sensor state update.
+        /*!
+         \param dt the step time of the simulation [s]
+         */
+        virtual void InternalUpdate(Scalar dt) = 0;
+        
+        //! A method returning the type of the sensor.
+        virtual SensorType getType() = 0;
+        
         //! A method resetting the sensor.
         virtual void Reset();
         
@@ -121,10 +130,10 @@ namespace sf
         void SaveMeasurementsToOctaveFile(const std::string& path, bool includeTime = true, bool separateChannels = false);
         
         //! A method returning the number of channels of the sensor.
-        unsigned short getNumOfChannels() const;
+        unsigned short getNumOfChannels();
         
         //! A method returning the last sample.
-        Sample getLastSample() const;
+        Sample getLastSample();
         
         //! A method returing a pointer to a copy of the history of sensor measurements.
         const std::vector<Sample>* getHistory();
@@ -135,24 +144,27 @@ namespace sf
          \param channel the index of the channel
          \return value of the measurement
          */
-        Scalar getValue(unsigned long int index, unsigned int channel) const;
+        Scalar getValue(unsigned long int index, unsigned int channel);
         
         //! A method returning the last value of the measurement.
         /*!
          \param channel the index of the channel
          \return last value of the measurement
          */
-        Scalar getLastValue(unsigned int channel) const;
+        Scalar getLastValue(unsigned int channel);
         
         //! A method returning the description of a specified channel.
         /*!
          \param channel the infdex of the channel
          \return a structure discribing the channel
          */
-        SensorChannel getSensorChannelDescription(unsigned int channel) const;
+        SensorChannel getSensorChannelDescription(unsigned int channel);
         
         //! A method returning the type of scalar sensor.
-        virtual ScalarSensorType getScalarSensorType() const = 0;
+        virtual ScalarSensorType getScalarSensorType() = 0;
+
+        //! A method returning the sensor measurement frame.
+        virtual Transform getSensorFrame() const = 0;
         
     protected:
         void AddSampleToHistory(const Sample& s);

@@ -56,7 +56,7 @@ void FlyingTestManager::BuildScenario()
 
     ////////OBJECTS    
     //Create environment
-    getAtmosphere()->SetSunPosition(0.0, 60.0);
+    getAtmosphere()->SetupSunPosition(0.0, 60.0);
     
     sf::Plane* floor = new sf::Plane("Floor", 10000, "Ground", "grid");
     AddStaticEntity(floor, sf::Transform::getIdentity());
@@ -68,12 +68,15 @@ void FlyingTestManager::BuildScenario()
     sf::Box* leaf = new sf::Box("Leaf", phy, sf::Vector3(5,3,0.0001), sf::I4(), "Fiberglass","white");
     AddSolidEntity(leaf, sf::Transform(sf::Quaternion(0,0.3,0), sf::Vector3(10,0,-10)));
     
-    std::shared_ptr<sf::Polyhedron> propeller = std::make_shared<sf::Polyhedron>("Propeller1", phy, sf::GetDataPath() + "propeller_air.obj", sf::Scalar(1), sf::I4(), "Fiberglass", "propeller");
+    sf::Polyhedron* propeller1 = new sf::Polyhedron("Propeller1", phy, sf::GetDataPath() + "propeller_air.obj", sf::Scalar(1), sf::I4(), "Fiberglass", "propeller");
+    sf::Polyhedron* propeller2 = new sf::Polyhedron("Propeller2", phy, sf::GetDataPath() + "propeller_air.obj", sf::Scalar(1), sf::I4(), "Fiberglass", "propeller");
+    sf::Polyhedron* propeller3 = new sf::Polyhedron("Propeller3", phy, sf::GetDataPath() + "propeller_air.obj", sf::Scalar(1), sf::I4(), "Fiberglass", "propeller");
+    sf::Polyhedron* propeller4 = new sf::Polyhedron("Propeller4", phy, sf::GetDataPath() + "propeller_air.obj", sf::Scalar(1), sf::I4(), "Fiberglass", "propeller");
     
-    sf::Propeller* prop1 = new sf::Propeller("Prop1", propeller, 0.2, 0.1, 0.01, 10000, true);
-    sf::Propeller* prop2 = new sf::Propeller("Prop2", propeller, 0.2, 0.1, 0.01, 10000, true);
-    sf::Propeller* prop3 = new sf::Propeller("Prop3", propeller, 0.2, 0.1, 0.01, 10000, false);
-    sf::Propeller* prop4 = new sf::Propeller("Prop4", propeller, 0.2, 0.1, 0.01, 10000, false);
+    sf::Propeller* prop1 = new sf::Propeller("Prop1", propeller1, 0.2, 0.1, 0.01, 10000, true);
+    sf::Propeller* prop2 = new sf::Propeller("Prop2", propeller2, 0.2, 0.1, 0.01, 10000, true);
+    sf::Propeller* prop3 = new sf::Propeller("Prop3", propeller3, 0.2, 0.1, 0.01, 10000, false);
+    sf::Propeller* prop4 = new sf::Propeller("Prop4", propeller4, 0.2, 0.1, 0.01, 10000, false);
     
     sf::Box* arm1 = new sf::Box("Arm1", phy, sf::Vector3(1.0,0.01,0.01), sf::I4(), "Fiberglass", "white");
     sf::Box* arm2 = new sf::Box("Arm2", phy, sf::Vector3(0.01,1.0,0.01), sf::I4(), "Fiberglass", "white");

@@ -62,7 +62,7 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        void InternalUpdate(Scalar dt) override;
+        void InternalUpdate(Scalar dt);
         
         //! A method used to setup the OpenGL sonar transformation.
         /*!
@@ -70,13 +70,13 @@ namespace sf
          \param dir a unit vector parallel to the central axis of the sonar
          \param up a unit vector perpendicular to the sonar scanning plane
          */
-        void SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up) override;
+        void SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up);
         
         //! A method used to inform about new data.
         /*!
          \param index the id of the OpenGL camera (here sonar) uploading the data
          */
-        void NewDataReady(void* data, unsigned int index = 0) override;
+        void NewDataReady(void* data, unsigned int index = 0);
         
         //! A method used to set a callback function called when new data is available.
         /*!
@@ -133,16 +133,13 @@ namespace sf
          \param x a reference to a variable that will store the horizontal resolution [pix]
          \param y a reference to a variable that will store the vertical resolution [pix]
          */
-        void getDisplayResolution(unsigned int& x, unsigned int& y) const;
+        void getDisplayResolution(unsigned int& x, unsigned int& y);
         
         //! A method returning a pointer to the visualisation image data.
         GLubyte* getDisplayDataPointer();
         
         //! A method returning the type of the vision sensor.
-        VisionSensorType getVisionSensorType() const override;
-        
-        //! A method returning a pointer to the underlaying OpenGLView object.
-        OpenGLView* getOpenGLView() const override;
+        VisionSensorType getVisionSensorType();
         
     private:
         void InitGraphics();

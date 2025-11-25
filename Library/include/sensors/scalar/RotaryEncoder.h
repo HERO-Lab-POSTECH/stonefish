@@ -61,13 +61,13 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        virtual void InternalUpdate(Scalar dt) override;
+        virtual void InternalUpdate(Scalar dt);
         
         //! A method that resets the sensor.
         virtual void Reset();
         
         //! A method returning the type of the scalar sensor.
-        ScalarSensorType getScalarSensorType() const override;
+        ScalarSensorType getScalarSensorType();
         
     protected:
         Scalar GetRawAngle();

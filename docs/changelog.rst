@@ -4,51 +4,6 @@ Changelog
 
 The changelog of the library code is presented below. **Breaking changes** were marked with *italics*.
 
-1.5
-===
-
--  Implemented an event-based camera
--  Implemented an optical flow sensor
--  Implemented a segmentation camera
--  Implemented a thermal camera
--  *Implemented an optical modem*
--  *Improved processing of messages of all communication devices*
--  Extended look definition to support temperature maps
--  Added water temperature
--  Added air temperature, pressure, and humidity
--  Added a test application for all camera types
--  Updated marine snow rendering to use the same particle system for vision sensors attached to the same body
--  Removed failing framerate limitting and added option to enable vertical synchronisation
--  Fixed application of hydrodynamic drag coefficients to compound bodies
--  Fixed problems with vision sensor framerate not consistent with settings
--  Fixed switching on/off lights
-
-1.4
-===
-
--  *Reimplemented the thruster actuator to support combinations of different mathematical models*
--  *Rewritten computation of hydrodynamic drag*
--  *Simple thruster is now a new actuator class and displays a rotating propeller*
--  Implemented new trajectory generator for animated bodies utilising B-splines (now default)
--  Extended glue to support joining links of two Featherstone robots together
--  Extended fixed joint class to support updates of joint definition (dynamic activation/deactivation)
--  Added a watchdog timer to the actuators, including parser support
--  Added access to the viscous and quadratic hydrodynamic drag coefficients, including parser support
--  Added an option to set internal parts of a compound body as always visible
--  Added access to the computed wetted surface area and submerged volume
--  Added maximum angular rate of change of the rudder actuator angle, to represent the actuator's dynamics
--  Added an option to specify fluid dynamics computation prescaler, including parser support
--  *Fixed loading sRGB and linear textures (fixes normal map issues)*
--  Fixed ocean rendering error when switching between different views 
--  Fixed calculation and rendering of the ellipsoidal approximation used for added mass estimation
--  Fixed buoyancy force calculation for flat ocean (floating bodies are not rotating or moving anymore!)
--  Fixed IMU readings, adding the missing gravitational and centrifugal accelerations
--  Fixed rendering of vision sensor outputs for debug purposes
--  Fixed getting robot transform
--  Fixed acoustic modem implementation eliminating problem with modems not seeing each other
--  Fixed sonar update frequency implementation to allow for slow updates
--  Fixed Stonefish logo and icon
-
 1.3
 ===
 

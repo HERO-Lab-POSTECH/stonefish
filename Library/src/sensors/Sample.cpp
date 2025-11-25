@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 23/03/2014.
-//  Copyright (c) 2014-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/Sample.h"
@@ -31,20 +31,30 @@
 namespace sf
 {
 
-Sample::Sample(const std::vector<Scalar>& data, bool invalid, uint64_t index)
-    : data{data}, id{index}
+Sample::Sample(unsigned short nDimensions, Scalar* values, bool invalid, uint64_t index)
 {
+    nDim = nDimensions > 0 ? nDimensions : 1;
+    data = new Scalar[nDim];
+    std::memcpy(data, values, sizeof(Scalar)*nDim);
+    id = index;
     if(invalid)
         timestamp = Scalar(-1);
     else
-        timestamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime(true);
+        timestamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime();
 }
 
 Sample::Sample(const Sample& other, uint64_t index)
 {
     timestamp = other.timestamp;
-    data = other.data;
+    nDim = other.nDim;
+    data = new Scalar[nDim];
+    std::memcpy(data, other.data, sizeof(Scalar)*nDim);
     id = index;
+}
+
+Sample::~Sample()
+{
+    delete [] data;
 }
 
 Scalar Sample::getTimestamp() const
@@ -52,27 +62,27 @@ Scalar Sample::getTimestamp() const
     return timestamp;
 }
     
-size_t Sample::getNumOfDimensions() const
+unsigned short Sample::getNumOfDimensions() const
 {
-    return data.size();
+    return nDim;
 }
     
 Scalar* Sample::getDataPointer()
 {
-    return data.data();
+    return data;
 }
 
-Scalar Sample::getValue(size_t dimension) const
+Scalar Sample::getValue(unsigned short dimension) const
 {
-    if(dimension < data.size())
+    if((dimension < nDim) && (data != NULL))
         return data[dimension];
     else
-        return Scalar(0);
+        return Scalar(0.);
 }
 
 std::vector<Scalar> Sample::getData() const
 {
-    return data;
+    return std::vector<Scalar>(data, data+nDim);
 }
 
 uint64_t Sample::getId() const

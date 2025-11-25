@@ -33,8 +33,8 @@
 namespace sf
 {
 
-DepthCamera::DepthCamera(std::string uniqueName, unsigned int resolutionX, unsigned int resolutionY, Scalar hFOVDeg, Scalar minDepth, Scalar maxDepth, Scalar frequency)
-    : Camera(uniqueName, resolutionX, resolutionY, hFOVDeg, frequency)
+DepthCamera::DepthCamera(std::string uniqueName, unsigned int resolutionX, unsigned int resolutionY, Scalar horizontalFOVDeg, Scalar minDepth, Scalar maxDepth, Scalar frequency)
+    : Camera(uniqueName, resolutionX, resolutionY, horizontalFOVDeg, frequency)
 {
     depthRange.x = minDepth < Scalar(0.01) ? 0.01f : (GLfloat)minDepth;
     depthRange.y = maxDepth > Scalar(0.01) ? (GLfloat)maxDepth : 1.f;
@@ -64,19 +64,14 @@ void* DepthCamera::getImageDataPointer(unsigned int index)
     return imageData;
 }
 
-glm::vec2 DepthCamera::getDepthRange() const
+glm::vec2 DepthCamera::getDepthRange()
 {
     return depthRange;
 }
     
-VisionSensorType DepthCamera::getVisionSensorType() const
+VisionSensorType DepthCamera::getVisionSensorType()
 {
     return VisionSensorType::DEPTH_CAMERA;
-}
-
-OpenGLView* DepthCamera::getOpenGLView() const
-{
-    return glCamera;
 }
 
 void DepthCamera::InitGraphics()

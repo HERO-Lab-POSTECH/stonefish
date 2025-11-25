@@ -20,18 +20,16 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 5/29/13.
-//  Copyright (c) 2013-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2013-2020 Patryk Cieslak. All rights reserved.
 //
 
 #include "graphics/OpenGLTrackball.h"
 
 #include "core/GraphicalSimulationApp.h"
-#include "core/SimulationManager.h"
 #include "entities/SolidEntity.h"
 #include "graphics/OpenGLPipeline.h"
 #include "graphics/OpenGLContent.h"
 #include "graphics/OpenGLState.h"
-#include "graphics/OpenGLRealOcean.h"
 
 namespace sf
 {
@@ -72,7 +70,7 @@ OpenGLTrackball::~OpenGLTrackball()
         delete outlineShader[1];
 }
 
-ViewType OpenGLTrackball::getType() const
+ViewType OpenGLTrackball::getType()
 {
     return ViewType::TRACKBALL;
 }
@@ -192,11 +190,6 @@ void OpenGLTrackball::MoveCenter(glm::vec3 step)
 void OpenGLTrackball::GlueToMoving(MovingEntity* ent)
 {
     holdingEntity = ent;
-
-    //Clear ocean quadtree to avoid holes in the ocean rendering because of the sudden jump of camera origin
-    Ocean* ocean = ((GraphicalSimulationApp*)SimulationApp::getApp())->getSimulationManager()->getOcean();
-    if(ocean != nullptr && ocean->hasWaves())
-        ((OpenGLRealOcean*)ocean->getOpenGLOcean())->ResetSurface(this);
 }
 
 void OpenGLTrackball::DrawSelection(const std::vector<Renderable>& r, GLuint destinationFBO)

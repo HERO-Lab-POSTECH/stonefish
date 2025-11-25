@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 15/07/2020.
-//  Copyright (c) 2020-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2020 Patryk Cieslak. All rights reserved.
 //
 
 #include "entities/AnimatedEntity.h"
@@ -39,9 +39,6 @@ AnimatedEntity::AnimatedEntity(std::string uniqueName, Trajectory* traj) : Movin
         return;        
 
     T_CG2O = T_O2C = T_O2G = I4();
-    
-    linearAcc.setZero();
-    angularAcc.setZero();
 
     //Build rigid body
     btEmptyShape* shape = new btEmptyShape();
@@ -68,7 +65,6 @@ AnimatedEntity::AnimatedEntity(std::string uniqueName, Trajectory* traj, Scalar 
         Mesh* phyMesh = OpenGLContent::BuildSphere((GLfloat)sphereRadius);
         phyObjectId = ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->BuildObject(phyMesh);
         graObjectId = phyObjectId;
-        delete phyMesh;
     }
 }
 
@@ -92,7 +88,6 @@ AnimatedEntity::AnimatedEntity(std::string uniqueName, Trajectory* traj, Scalar 
         Mesh* phyMesh = OpenGLContent::BuildCylinder((GLfloat)cylinderRadius, (GLfloat)cylinderHeight);
         phyObjectId = ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->BuildObject(phyMesh);
         graObjectId = phyObjectId;
-        delete phyMesh;
     }
 }
 
@@ -115,7 +110,6 @@ AnimatedEntity::AnimatedEntity(std::string uniqueName, Trajectory* traj, Vector3
         Mesh* phyMesh = OpenGLContent::BuildBox(glm::vec3((GLfloat)boxDimensions.getX()/2.f, (GLfloat)boxDimensions.getY()/2.f, (GLfloat)boxDimensions.getZ()/2.f));
         phyObjectId = ((GraphicalSimulationApp*)SimulationApp::getApp())->getGLPipeline()->getContent()->BuildObject(phyMesh);
         graObjectId = phyObjectId;
-        delete phyMesh;
     }
 }
 
@@ -230,12 +224,12 @@ Vector3 AnimatedEntity::getLinearVelocityInLocalPoint(const Vector3& relPos) con
 
 Vector3 AnimatedEntity::getLinearAcceleration() const
 {
-    return linearAcc;
+    return V0();
 }
         
 Vector3 AnimatedEntity::getAngularAcceleration() const
 {
-    return angularAcc;
+    return V0();
 }
 
 Trajectory* AnimatedEntity::getTrajectory()
@@ -299,7 +293,6 @@ void AnimatedEntity::Update(Scalar dt)
     rigidBody->getMotionState()->setWorldTransform(tr->getInterpolatedTransform() *  T_CG2O.inverse());
     rigidBody->setLinearVelocity(tr->getInterpolatedLinearVelocity());
     rigidBody->setAngularVelocity(tr->getInterpolatedAngularVelocity());    
-    setLinearAcceleration(tr->getInterpolatedLinearAcceleration());
 }
 
 std::vector<Renderable> AnimatedEntity::Render()
@@ -316,17 +309,13 @@ std::vector<Renderable> AnimatedEntity::Render()
         if(graObjectId >= 0)
         {
             item.type = RenderableType::SOLID;
-            item.cor = glVectorFromVector(getOTransform().getOrigin());
-            item.vel = glVectorFromVector(getLinearVelocity());
-            item.avel = glVectorFromVector(getAngularVelocity());
             item.materialName = mat.name;
             item.objectId = dm == DisplayMode::GRAPHICAL ? graObjectId : phyObjectId;
             item.lookId = dm == DisplayMode::GRAPHICAL ? lookId : -1;
             items.push_back(item);
         }
-        
-        std::vector<Renderable> trajectoryItems = tr->Render();
-        items.insert(items.begin(), trajectoryItems.begin(), trajectoryItems.end());
+
+        items.push_back(tr->Render());
     }
 
     return items;

@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 05/07/2014.
-//  Copyright (c) 2014-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2014-2023 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/RotaryEncoder.h"
@@ -140,7 +140,10 @@ void RotaryEncoder::InternalUpdate(Scalar dt)
     Scalar angularVelocity = (angle - angle0)/dt; // Less noisy than reading raw velocity
     
     //record sample
-    Sample s{std::vector<Scalar>({angle, angularVelocity})};
+    Scalar m[2];
+    m[0] = angle;
+    m[1] = angularVelocity;
+    Sample s(2, m);
     AddSampleToHistory(s);
 }
 
@@ -150,7 +153,7 @@ void RotaryEncoder::Reset()
     ScalarSensor::Reset();
 }
 
-ScalarSensorType RotaryEncoder::getScalarSensorType() const
+ScalarSensorType RotaryEncoder::getScalarSensorType()
 {
     return ScalarSensorType::ENCODER;
 }

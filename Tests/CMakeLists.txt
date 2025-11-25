@@ -3,9 +3,6 @@ add_definitions(-DDATA_DIR_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/Data/\")
 add_executable(ConsoleTest ConsoleTest/main.cpp ConsoleTest/ConsoleTestApp.cpp ConsoleTest/ConsoleTestManager.cpp)
 target_link_libraries(ConsoleTest Stonefish_test)
 
-add_executable(CameraTest CameraTest/main.cpp CameraTest/CameraTestManager.cpp)
-target_link_libraries(CameraTest Stonefish_test)
-
 add_executable(FallingTest FallingTest/main.cpp FallingTest/FallingTestApp.cpp FallingTest/FallingTestManager.cpp)
 target_link_libraries(FallingTest Stonefish_test)
 
@@ -23,9 +20,3 @@ target_link_libraries(SlidingTest Stonefish_test)
 
 add_executable(UnderwaterTest UnderwaterTest/main.cpp UnderwaterTest/UnderwaterTestApp.cpp UnderwaterTest/UnderwaterTestManager.cpp)
 target_link_libraries(UnderwaterTest Stonefish_test)
-
-add_executable(FluidDynamicsTest FluidDynamicsTest/main.cpp FluidDynamicsTest/FluidDynamicsTestApp.cpp FluidDynamicsTest/FluidDynamicsTestManager.cpp)
-target_link_libraries(FluidDynamicsTest Stonefish_test)
-
-add_executable(LearningTest LearningTest/main.cpp LearningTest/LearningTestManager.cpp)
-target_link_libraries(LearningTest Stonefish_test)

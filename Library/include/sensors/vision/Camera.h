@@ -46,7 +46,13 @@ namespace sf
         
         //! A destructor.
         virtual ~Camera();
-               
+        
+        //! A method performing internal sensor state update.
+        /*!
+         \param dt the step time of the simulation [s]
+         */
+        virtual void InternalUpdate(Scalar dt) = 0;
+        
         //! A method used to inform about new data.
         /*!
          \param data a pointer to the OpenGL texture data
@@ -84,17 +90,17 @@ namespace sf
          \param scale reference to the scaling factor of the image
          \return a flag indicating if the view should be displayed
          */
-        bool getDisplayOnScreen(unsigned int& x, unsigned int& y, float& scale) const;
+        bool getDisplayOnScreen(unsigned int& x, unsigned int& y, float& scale);
         
         //! A method returning the horizontal field of view of the camera [deg].
-        Scalar getHorizontalFOV() const;
+        Scalar getHorizontalFOV();
         
         //! A method returning the resolution of the camera image.
         /*!
          \param x a reference to a variable that will store the horizontal resolution [pix]
          \param y a reference to a variable that will store the vertical resolution [pix]
          */
-        void getResolution(unsigned int& x, unsigned int& y) const;
+        void getResolution(unsigned int& x, unsigned int& y);
         
         //! A method returning the pointer to the image data.
         /*!

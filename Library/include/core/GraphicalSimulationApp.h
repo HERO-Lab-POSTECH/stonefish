@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 11/28/12.
-//  Copyright (c) 2012-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2012-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_GraphicalSimulationApp__
@@ -44,28 +44,16 @@ namespace sf
     public:
         //! A constructor.
         /*!
-         \param title a title for the application
+         \param name a name for the application
          \param dataDirPath a path to the directory containing simulation data
          \param s a structure containing the rendering settings
          \param h a structure containing the helper objects display settings
          \param sim a pointer to the simulation manager
          */
-        GraphicalSimulationApp(std::string title, std::string dataDirPath, RenderSettings s, HelperSettings h, SimulationManager* sim);
+        GraphicalSimulationApp(std::string name, std::string dataDirPath, RenderSettings s, HelperSettings h, SimulationManager* sim);
         
         //! A destructor.
         virtual ~GraphicalSimulationApp();
-
-        //! A method that starts the simulation on demand.
-        void StartSimulation() override;
-
-        //! A method that stops the simulation on demand.
-        void StopSimulation() override;
-
-        //! A method that resumes the simulation on demand.
-        void ResumeSimulation() override;
-
-        //! A method that performs a single simulation step and necessary updates.
-        void StepSimulation() override;
         
         //! A method implementing the GUI on top of the simulation window.
         virtual void DoHUD();
@@ -178,11 +166,17 @@ namespace sf
         
         //! A method returning a mutable reference to the helper object rendering settings.
         HelperSettings& getHelperSettings();
+
+        //! A method used to enable frame rate limitting.
+        void setLimitFramerate(bool enabled);
         
     protected:
         void Init();
         void LoopInternal();
         void CleanUp();
+        void StartSimulation();
+        void ResumeSimulation();
+        void StopSimulation();
         
         virtual void InitializeGUI();
         
@@ -214,7 +208,6 @@ namespace sf
         bool loading;
         double drawingTime;
         double maxDrawingTime;
-        double fps_;
         int maxCounter;
         int windowW;
         int windowH;
@@ -222,15 +215,26 @@ namespace sf
         HelperSettings hSettings;
         GLuint timeQuery[2];
         GLint timeQueryPingpong;
-        
+        bool limitFramerate;
+
         static int RenderLoadingScreen(void* data);
         static int RunSimulation(void* data);
     };
     
     //! A structure used to pass information between threads.
-    struct GraphicalSimulationThreadData
+    typedef struct
     {
-        GraphicalSimulationApp& app;
-    };
+        GraphicalSimulationApp* app;
+        SDL_mutex* drawingQueueMutex;
+    }
+    GraphicalSimulationThreadData;
+    
+    //! A structure used to pass information between threads.
+    typedef struct
+    {
+        GraphicalSimulationApp* app;
+        SDL_mutex* mutex;
+    }
+    LoadingThreadData;
 }
 #endif

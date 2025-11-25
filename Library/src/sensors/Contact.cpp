@@ -54,7 +54,7 @@ Contact::~Contact()
     points.clear();
 }
 
-std::string Contact::getName() const
+std::string Contact::getName()
 {
     return name;
 }
@@ -79,7 +79,7 @@ void Contact::MarkDataOld()
     newDataAvailable = false;
 }
 
-bool Contact::isNewDataAvailable() const
+bool Contact::isNewDataAvailable()
 {
     return newDataAvailable;
 }
@@ -117,7 +117,7 @@ void Contact::AddContactPoint(ContactPoint p)
     if(historyLen > 0 && points.size() == historyLen)
         points.pop_front();
 
-    p.timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime(true);
+    p.timeStamp = SimulationApp::getApp()->getSimulationManager()->getSimulationTime();
     points.push_back(p);
     
     newDataAvailable = true;

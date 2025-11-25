@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 31/07/2018.
-//  Copyright (c) 2018-2025 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "sensors/scalar/Profiler.h"
@@ -72,7 +72,8 @@ void Profiler::InternalUpdate(Scalar dt)
         distance = channels[1].rangeMax;
    
     //Record sample
-    Sample s{std::vector<Scalar>({currentAngle, distance})};
+    Scalar data[2] = {currentAngle, distance};
+    Sample s(2, data);
     AddSampleToHistory(s);
     
     //Rotate beam
@@ -127,7 +128,7 @@ void Profiler::setNoise(Scalar rangeStdDev)
     channels[1].setStdDev(btClamped(rangeStdDev, Scalar(0), Scalar(BT_LARGE_FLOAT)));
 }
 
-ScalarSensorType Profiler::getScalarSensorType() const
+ScalarSensorType Profiler::getScalarSensorType()
 {
     return ScalarSensorType::PROFILER;
 }

@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Nils Bore on 29/01/2021.
-//  Copyright (c) 2021-2024 Nils Bore, Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2021-2023 Nils Bore, Patryk Cieslak. All rights reserved.
 //
 
 #include "actuators/Rudder.h"
@@ -34,15 +34,13 @@
 namespace sf
 {
 
-Rudder::Rudder(std::string uniqueName, SolidEntity* rudder, Scalar area, Scalar liftCoeff, Scalar dragCoeff, Scalar stallAngle, 
-    Scalar maxAngle, bool inverted, Scalar maxAngularRate) : LinkActuator(uniqueName)
+Rudder::Rudder(std::string uniqueName, SolidEntity* rudder, Scalar area, Scalar liftCoeff, Scalar dragCoeff, Scalar stallAngle, Scalar maxAngle, bool inverted) : LinkActuator(uniqueName)
 {
     this->dragCoeff = dragCoeff;
     this->liftCoeff = liftCoeff;
     this->area = area;
     this->stallAngle = stallAngle;
     this->maxAngle = maxAngle;
-    this->maxAngularRate = btFabs(maxAngularRate);
     inv = inverted;
 
     setpoint = Scalar(0);
@@ -81,13 +79,7 @@ Scalar Rudder::getAngle() const
 void Rudder::Update(Scalar dt)
 {
     //Update rudder angle
-    if(maxAngularRate > Scalar(0) && btFabs(setpoint-theta)/dt > maxAngularRate)
-    {
-        Scalar dTheta = setpoint-theta > Scalar(0) ? maxAngularRate * dt : -maxAngularRate * dt;
-        theta += dTheta;
-    }
-    else
-        theta = setpoint;
+    theta = setpoint;
 
     if(attach != NULL)
     {
@@ -113,7 +105,7 @@ void Rudder::Update(Scalar dt)
             angle = atan2(-velocity.getY(), -velocity.getX());
         }
 
-        if(ocn != nullptr && ocn->IsInsideFluid(rudderTrans.getOrigin()) && !velocity.isZero())
+        if(ocn->IsInsideFluid(rudderTrans.getOrigin()) && !velocity.isZero())
         {
             // Calculate quadratic approximations for lift and drag
 
@@ -163,11 +155,6 @@ void Rudder::Update(Scalar dt)
             attach->ApplyTorque(liftT);
             attach->ApplyCentralForce(rudderTrans.getBasis() * dragV);
             attach->ApplyCentralForce(rudderTrans.getBasis() * liftV);
-        }
-        else
-        {
-            dragV = Vector3(0, 0, 0);
-            liftV = Vector3(0, 0, 0);
         }
     }
 }

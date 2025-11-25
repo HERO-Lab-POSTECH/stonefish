@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 21/07/20.
-//  Copyright (c) 2020-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2020-2021 Patryk Cieslak. All rights reserved.
 //
 
 #include "graphics/OpenGLMSIS.h"
@@ -298,7 +298,6 @@ void OpenGLMSIS::ComputeOutput(std::vector<Renderable>& objects)
     OpenGLState::Viewport(0, 0, nBeamSamples.x, nBeamSamples.y);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_CLAMP);
-    OpenGLState::EnableDepthTest();
     sonarInputShader[1]->Use();
     sonarInputShader[1]->SetUniform("eyePos", GetEyePosition());
     sonarInputShader[0]->Use();
@@ -316,7 +315,7 @@ void OpenGLMSIS::ComputeOutput(std::vector<Renderable>& objects)
         const Look& look = content->getLook(objects[i].lookId);
         glm::mat4 M = objects[i].model;
         Material mat = SimulationApp::getApp()->getSimulationManager()->getMaterialManager()->getMaterial(objects[i].materialName);
-        bool normalMapping = obj.texturable && (look.normalMap > 0);
+        bool normalMapping = obj.texturable && (look.normalTexture > 0);
         shader = normalMapping ? sonarInputShader[1] : sonarInputShader[0];
         shader->Use();
         shader->SetUniform("MVP", VP * M);
@@ -324,11 +323,10 @@ void OpenGLMSIS::ComputeOutput(std::vector<Renderable>& objects)
         shader->SetUniform("N", glm::mat3(glm::transpose(glm::inverse(M))));
         shader->SetUniform("restitution", (GLfloat)mat.restitution);
         if(normalMapping)
-            OpenGLState::BindTexture(TEX_MAT_NORMAL, GL_TEXTURE_2D, look.normalMap);
+            OpenGLState::BindTexture(TEX_MAT_NORMAL, GL_TEXTURE_2D, look.normalTexture);
         content->DrawObject(objects[i].objectId, objects[i].lookId, objects[i].model);
     }
     glEnable(GL_DEPTH_CLAMP);
-    OpenGLState::DisableDepthTest();
     OpenGLState::UnbindTexture(TEX_MAT_NORMAL);
     OpenGLState::BindFramebuffer(0);
 
@@ -369,7 +367,7 @@ void OpenGLMSIS::ComputeOutput(std::vector<Renderable>& objects)
     glGenerateMipmap(GL_TEXTURE_2D);
     sonarVisualizeShader->Use();
     sonarVisualizeShader->SetUniform("texSonarData", TEX_POSTPROCESS1);
-    sonarVisualizeShader->SetUniform("colorMap", static_cast<GLint>(cMap));
+    sonarVisualizeShader->SetUniform("colormap", static_cast<GLint>(cMap));
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     OpenGLState::BindVertexArray(displayVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, (fanDiv+1)*2);
@@ -395,7 +393,6 @@ void OpenGLMSIS::DrawLDR(GLuint destinationFBO, bool updated)
         int windowHeight = ((GraphicalSimulationApp*)SimulationApp::getApp())->getWindowHeight();
         int windowWidth = ((GraphicalSimulationApp*)SimulationApp::getApp())->getWindowWidth();
         OpenGLState::BindFramebuffer(destinationFBO);    
-        content->SetViewportSize(windowWidth, windowHeight);
         OpenGLState::Viewport(0, 0, windowWidth, windowHeight);
         OpenGLState::DisableCullFace();
         content->DrawTexturedQuad(dispX, dispY+viewportHeight*dispScale, viewportWidth*dispScale, -viewportHeight*dispScale, displayTex);

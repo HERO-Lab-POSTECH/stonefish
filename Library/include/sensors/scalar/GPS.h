@@ -46,7 +46,7 @@ namespace sf
         /*!
          \param dt the step time of the simulation [s]
          */
-        void InternalUpdate(Scalar dt) override;
+        void InternalUpdate(Scalar dt);
         
         //! A method used to set the noise characteristics of the sensor.
         /*!
@@ -55,10 +55,10 @@ namespace sf
         void setNoise(Scalar nedDev);
         
         //! A method that returns the standard deviation of position in meters.
-        Scalar getNoise() const;
+        Scalar getNoise();
         
         //! A method returning the type of the scalar sensor.
-        ScalarSensorType getScalarSensorType() const override;
+        ScalarSensorType getScalarSensorType();
         
     private:
         //Custom noise generation specific to GPS

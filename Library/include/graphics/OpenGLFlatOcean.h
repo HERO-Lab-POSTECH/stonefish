@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 10/05/2020.
-//  Copyright (c) 2020-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_OpenGLFlatOcean__
@@ -45,33 +45,27 @@ namespace sf
          
         //! A method that updates the wave mesh.
         /*!
-         \param view a pointer to the active view
+         \param cam a pointer to the active camera
          */
-        void UpdateSurface(OpenGLView* view) override;
+        void UpdateSurface(OpenGLCamera* cam);
         
         //! A method that draws the surface of the ocean.
         /*!
-         \param view a pointer to the active view
+         \param cam a pointer to the active camera
          */
-        void DrawSurface(OpenGLView* view) override;
-
-        //! A method that draws the surface of the ocean as thermal image.
-        /*!
-         \param view a pointer to the active view
-         */
-        void DrawSurfaceTemperature(OpenGLView* view) override;
+        void DrawSurface(OpenGLCamera* cam);
         
         //! A method that draws the surface of the ocean, seen from underwater.
         /*!
-         \param view a pointer to the active view
+         \param cam a pointer to the active camera
          */
-        void DrawBacksurface(OpenGLView* view) override;
+        void DrawBacksurface(OpenGLCamera* cam);
         
         //! A method that generates the stencil mask.
         /*!
-         \param view a pointer to the active view
+         \param cam a pointer to the active camera
          */
-        void DrawUnderwaterMask(OpenGLView* view) override;
+        void DrawUnderwaterMask(OpenGLCamera* cam);
         
     private:
         GLuint vao;

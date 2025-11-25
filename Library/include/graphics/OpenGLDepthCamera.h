@@ -20,7 +20,7 @@
 //  Stonefish
 //
 //  Created by Patryk Cieslak on 04/05/18.
-//  Copyright (c) 2018-2024 Patryk Cieslak. All rights reserved.
+//  Copyright (c) 2018-2020 Patryk Cieslak. All rights reserved.
 //
 
 #ifndef __Stonefish_OpenGLDepthCamera__
@@ -74,34 +74,25 @@ namespace sf
          \param destinationFBO the id of the framebuffer used as the destination for rendering
          \param updated a flag indicating if view content was updated
          */
-        void DrawLDR(GLuint destinationFBO, bool updated) override;
+        void DrawLDR(GLuint destinationFBO, bool updated);
         
         //! A method returning the eye position.
-        glm::vec3 GetEyePosition() const override;
+        glm::vec3 GetEyePosition() const;
         
         //! A method returning a unit vector parallel to the optical axis of the camera.
-        glm::vec3 GetLookingDirection() const override;
+        glm::vec3 GetLookingDirection() const;
         
         //! A method returning a unit vector pointing to the top edge of the image.
-        glm::vec3 GetUpDirection() const override;
+        glm::vec3 GetUpDirection() const;
 
         //! A method returning the projection matrix.
-        glm::mat4 GetProjectionMatrix() const override;
+        glm::mat4 GetProjectionMatrix() const;
         
         //! A method returning the view matrix.
-        glm::mat4 GetViewMatrix() const override;
-
-        //! A method that returns the near clip plane distance.
-        GLfloat GetNearClip() const override;
+        glm::mat4 GetViewMatrix() const;
 
         //! A method that returns the far clip plane distance.
-        GLfloat GetFarClip() const override;
-
-        //! A method that returns the horizontal field of view.
-        GLfloat GetFOVX() const override;
-        
-        //! A method that returns the vertical field of view.
-        GLfloat GetFOVY() const override;
+        GLfloat GetFarClip() const;
         
         //! A method that sets up the camera.
         void SetupCamera();
@@ -115,13 +106,13 @@ namespace sf
         void SetupCamera(glm::vec3 eye, glm::vec3 dir, glm::vec3 up);
         
         //! A method that updates camera world transform.
-        void UpdateTransform() override;
+        void UpdateTransform();
 
         //! A method that flags the camera as needing update.
         void Update();
         
         //! A method that informs if the camera needs update.
-        bool needsUpdate() override;
+        bool needsUpdate();
         
         //! A method to set a pointer to a camera sensor.
         /*!
@@ -137,7 +128,7 @@ namespace sf
         void setNoise(GLfloat depthStdDev);
 
         //! A method returning the type of the view.
-        ViewType getType() const override;
+        ViewType getType();
         
         //! A static method to load shaders.
         static void Init();
@@ -159,7 +150,6 @@ namespace sf
         glm::vec3 tempDir;
         glm::vec3 tempUp;
         glm::mat4 projection;
-        glm::vec2 fov;
         bool _needsUpdate;
         bool newData;
         glm::vec2 range;
