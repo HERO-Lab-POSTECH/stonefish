@@ -103,7 +103,14 @@ namespace sf
          
         //! A method that informs if the camera needs update.
         bool needsUpdate();
-        
+
+        //! A method to resize the camera viewport and recalculate projection matrix.
+        /*!
+         \param width the new viewport width [px]
+         \param height the new viewport height [px]
+         */
+        void Resize(GLint width, GLint height) override;
+
     private:
         ColorCamera* camera;
         GLuint cameraFBO;

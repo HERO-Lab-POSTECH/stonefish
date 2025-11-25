@@ -256,4 +256,14 @@ void OpenGLTrackball::DrawSelection(const std::vector<Renderable>& r, GLuint des
     OpenGLState::DisableBlend();
 }
 
+void OpenGLTrackball::Resize(GLint width, GLint height)
+{
+    // Call parent resize (updates viewportWidth/Height and textures)
+    OpenGLCamera::Resize(width, height);
+
+    // Recalculate projection matrix with new aspect ratio
+    GLfloat fovy = 2.f * atanf((GLfloat)viewportHeight / (GLfloat)viewportWidth * tanf(fovx / 2.f));
+    projection = glm::perspectiveFov(fovy, (GLfloat)viewportWidth, (GLfloat)viewportHeight, near, far);
+}
+
 }

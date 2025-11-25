@@ -974,21 +974,23 @@ void OpenGLCamera::Destroy()
 
 void OpenGLCamera::Resize(GLint width, GLint height)
 {
+    cInfo("OpenGLCamera::Resize(%d, %d) called", width, height);
+
     // Update base class viewport dimensions
     OpenGLView::Resize(width, height);
 
     // Delete existing textures
-    if(renderColorTex[0] != 0) glDeleteTextures(1, &renderColorTex[0]);
-    if(renderColorTex[1] != 0) glDeleteTextures(1, &renderColorTex[1]);
-    if(renderViewNormalTex != 0) glDeleteTextures(1, &renderViewNormalTex);
-    if(renderDepthStencilTex != 0) glDeleteTextures(1, &renderDepthStencilTex);
-    if(postprocessTex[0] != 0) glDeleteTextures(1, &postprocessTex[0]);
-    if(postprocessTex[1] != 0) glDeleteTextures(1, &postprocessTex[1]);
-    if(postprocessStencilTex != 0) glDeleteTextures(1, &postprocessStencilTex);
-    if(quaterPostprocessTex[0] != 0) glDeleteTextures(1, &quaterPostprocessTex[0]);
-    if(quaterPostprocessTex[1] != 0) glDeleteTextures(1, &quaterPostprocessTex[1]);
-    if(linearDepthTex[0] != 0) glDeleteTextures(1, &linearDepthTex[0]);
-    if(linearDepthTex[1] != 0) glDeleteTextures(1, &linearDepthTex[1]);
+    if(renderColorTex[0] != 0) { glDeleteTextures(1, &renderColorTex[0]); renderColorTex[0] = 0; }
+    if(renderColorTex[1] != 0) { glDeleteTextures(1, &renderColorTex[1]); renderColorTex[1] = 0; }
+    if(renderViewNormalTex != 0) { glDeleteTextures(1, &renderViewNormalTex); renderViewNormalTex = 0; }
+    if(renderDepthStencilTex != 0) { glDeleteTextures(1, &renderDepthStencilTex); renderDepthStencilTex = 0; }
+    if(postprocessTex[0] != 0) { glDeleteTextures(1, &postprocessTex[0]); postprocessTex[0] = 0; }
+    if(postprocessTex[1] != 0) { glDeleteTextures(1, &postprocessTex[1]); postprocessTex[1] = 0; }
+    if(postprocessStencilTex != 0) { glDeleteTextures(1, &postprocessStencilTex); postprocessStencilTex = 0; }
+    if(quaterPostprocessTex[0] != 0) { glDeleteTextures(1, &quaterPostprocessTex[0]); quaterPostprocessTex[0] = 0; }
+    if(quaterPostprocessTex[1] != 0) { glDeleteTextures(1, &quaterPostprocessTex[1]); quaterPostprocessTex[1] = 0; }
+    if(linearDepthTex[0] != 0) { glDeleteTextures(1, &linearDepthTex[0]); linearDepthTex[0] = 0; }
+    if(linearDepthTex[1] != 0) { glDeleteTextures(1, &linearDepthTex[1]); linearDepthTex[1] = 0; }
 
     // Delete AO textures if enabled
     if(aoFactor > 0)
@@ -1003,12 +1005,17 @@ void OpenGLCamera::Resize(GLint width, GLint height)
     // Recreate render textures with new size
     renderColorTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                     GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
+    cInfo("renderColorTex[0] = %u", renderColorTex[0]);
+
     renderColorTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                      GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
     renderViewNormalTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                          GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, FilteringMode::BILINEAR, false);
     renderDepthStencilTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
                                                            GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL, FilteringMode::NEAREST, false);
+
+    cInfo("Textures created: color[0]=%u, color[1]=%u, normal=%u, depth=%u",
+          renderColorTex[0], renderColorTex[1], renderViewNormalTex, renderDepthStencilTex);
 
     // Recreate postprocessing textures
     postprocessTex[0] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(viewportWidth, viewportHeight, 0),
@@ -1071,7 +1078,7 @@ void OpenGLCamera::Resize(GLint width, GLint height)
         OpenGLState::UnbindTexture(TEX_BASE);
     }
 
-    // Reattach textures to FBOs
+    // Reattach new textures to existing FBOs (don't delete FBOs during rendering)
     OpenGLState::BindFramebuffer(renderFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderColorTex[0], 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderViewNormalTex, 0);
@@ -1080,7 +1087,7 @@ void OpenGLCamera::Resize(GLint width, GLint height)
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
-        cError("Render FBO resize failed!");
+        cError("Render FBO reattach failed!");
 
     OpenGLState::BindFramebuffer(postprocessFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocessTex[0], 0);
@@ -1089,7 +1096,7 @@ void OpenGLCamera::Resize(GLint width, GLint height)
 
     status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
-        cError("Postprocess FBO resize failed!");
+        cError("Postprocess FBO reattach failed!");
 
     OpenGLState::BindFramebuffer(quaterPostprocessFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, quaterPostprocessTex[0], 0);
@@ -1097,7 +1104,7 @@ void OpenGLCamera::Resize(GLint width, GLint height)
 
     status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
-        cError("Quarter postprocess FBO resize failed!");
+        cError("Quarter postprocess FBO reattach failed!");
 
     OpenGLState::BindFramebuffer(linearDepthFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, linearDepthTex[0], 0);
@@ -1105,7 +1112,7 @@ void OpenGLCamera::Resize(GLint width, GLint height)
 
     status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
-        cError("Linear depth FBO resize failed!");
+        cError("Linear depth FBO reattach failed!");
 
     if(aoFactor > 0)
     {
@@ -1115,17 +1122,19 @@ void OpenGLCamera::Resize(GLint width, GLint height)
 
         status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if(status != GL_FRAMEBUFFER_COMPLETE)
-            cError("AO final FBO resize failed!");
+            cError("AO final FBO reattach failed!");
 
         OpenGLState::BindFramebuffer(aoCalcFBO);
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, aoResultArrayTex, 0);
 
         status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if(status != GL_FRAMEBUFFER_COMPLETE)
-            cError("AO calc FBO resize failed!");
+            cError("AO calc FBO reattach failed!");
     }
 
     OpenGLState::BindFramebuffer(0);
+
+    cInfo("OpenGLCamera::Resize completed successfully");
 }
 
 }

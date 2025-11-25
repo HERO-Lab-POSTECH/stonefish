@@ -342,10 +342,9 @@ void GraphicalSimulationApp::WindowEvent(SDL_Event* event)
             // Resize GUI
             gui->Resize(w, h);
 
-            // Resize OpenGL viewport and framebuffer
+            // Resize all views and pipeline
             if(glPipeline != NULL)
             {
-                // Update camera viewport size (critical for rendering)
                 OpenGLContent* content = glPipeline->getContent();
                 content->SetViewportSize(w, h);
 
@@ -356,11 +355,8 @@ void GraphicalSimulationApp::WindowEvent(SDL_Event* event)
                     view->Resize(w, h);
                 }
 
-                // Resize framebuffer texture
-                GLuint screenTex = glPipeline->getScreenTexture();
-                glBindTexture(GL_TEXTURE_2D, screenTex);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-                glBindTexture(GL_TEXTURE_2D, 0);
+                // Resize screen framebuffer
+                glPipeline->ResizeScreenFBO(w, h);
             }
             break;
     }

@@ -58,12 +58,13 @@ OpenGLDepthCamera::OpenGLDepthCamera(glm::vec3 eyePosition, glm::vec3 direction,
     
     SetupCamera(eyePosition, direction, cameraUp);
     UpdateTransform();
-    
-    GLfloat fovx = horizontalFOVDeg/180.f*M_PI;
-    
+
+    fovx = horizontalFOVDeg/180.f*M_PI;
+
     if(verticalFOVDeg > 0.f)
     {
-        GLfloat fovy = verticalFOVDeg/180.f*M_PI;
+        fovy = verticalFOVDeg/180.f*M_PI;
+        useCustomFovy = true;
         projection[0] = glm::vec4(range.x/(range.x*tanf(fovx/2.f)), 0.f, 0.f, 0.f);
         projection[1] = glm::vec4(0.f, range.x/(range.x*tanf(fovy/2.f)), 0.f, 0.f);
         projection[2] = glm::vec4(0.f, 0.f, -(range.y + range.x)/(range.y-range.x), -1.f);
@@ -71,7 +72,8 @@ OpenGLDepthCamera::OpenGLDepthCamera(glm::vec3 eyePosition, glm::vec3 direction,
     }
     else
     {
-        GLfloat fovy = 2.f * atanf( (GLfloat)viewportHeight/(GLfloat)viewportWidth * tanf(fovx/2.f) );
+        useCustomFovy = false;
+        fovy = 2.f * atanf( (GLfloat)viewportHeight/(GLfloat)viewportWidth * tanf(fovx/2.f) );
         projection = glm::perspectiveFov(fovy, (GLfloat)viewportWidth, (GLfloat)viewportHeight, range.x, range.y);
     }
     
@@ -365,6 +367,59 @@ void OpenGLDepthCamera::Destroy()
         delete [] depthCameraOutputShader;
     }
     if(depthVisualizeShader != NULL) delete depthVisualizeShader;
+}
+
+void OpenGLDepthCamera::Resize(GLint width, GLint height)
+{
+    // Call parent resize (updates viewportWidth/Height and textures)
+    OpenGLView::Resize(width, height);
+
+    // Recalculate projection matrix with new aspect ratio
+    if(useCustomFovy)
+    {
+        // Custom vertical FOV specified - use manual projection matrix
+        projection[0] = glm::vec4(range.x/(range.x*tanf(fovx/2.f)), 0.f, 0.f, 0.f);
+        projection[1] = glm::vec4(0.f, range.x/(range.x*tanf(fovy/2.f)), 0.f, 0.f);
+        projection[2] = glm::vec4(0.f, 0.f, -(range.y + range.x)/(range.y-range.x), -1.f);
+        projection[3] = glm::vec4(0.f, 0.f, -2.f*range.y*range.x/(range.y-range.x), 0.f);
+    }
+    else
+    {
+        // Square pixels - recalculate fovy based on new aspect ratio
+        fovy = 2.f * atanf((GLfloat)viewportHeight / (GLfloat)viewportWidth * tanf(fovx / 2.f));
+        projection = glm::perspectiveFov(fovy, (GLfloat)viewportWidth, (GLfloat)viewportHeight, range.x, range.y);
+    }
+
+    // Recreate depth textures with new size
+    glDeleteTextures(1, &renderDepthTex);
+    glGenTextures(1, &renderDepthTex);
+    OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D, renderDepthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, viewportWidth, viewportHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    OpenGLState::UnbindTexture(TEX_BASE);
+
+    glDeleteTextures(1, &linearDepthTex);
+    glGenTextures(1, &linearDepthTex);
+    OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D, linearDepthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, viewportWidth, viewportHeight, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    OpenGLState::UnbindTexture(TEX_BASE);
+
+    // Recreate PBO with new size
+    if(linearDepthPBO != 0)
+    {
+        glDeleteBuffers(1, &linearDepthPBO);
+        glGenBuffers(1, &linearDepthPBO);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, linearDepthPBO);
+        glBufferData(GL_PIXEL_PACK_BUFFER, viewportWidth * viewportHeight * sizeof(GLfloat), NULL, GL_STREAM_READ);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    }
 }
 
 }

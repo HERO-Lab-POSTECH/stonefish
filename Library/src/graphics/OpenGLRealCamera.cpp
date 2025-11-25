@@ -300,3 +300,17 @@ float convertEV100ToExposure(float EV100)
     float maxLuminance = 1.2*pow(2.0, EV100);
     return 1.0/maxLuminance;
 }*/
+
+namespace sf {
+
+void OpenGLRealCamera::Resize(GLint width, GLint height)
+{
+    // Call parent resize (updates viewportWidth/Height and textures)
+    OpenGLCamera::Resize(width, height);
+
+    // Recalculate projection matrix with new aspect ratio
+    GLfloat fovy = 2.f * atanf((GLfloat)viewportHeight / (GLfloat)viewportWidth * tanf(fovx / 2.f));
+    projection = glm::perspectiveFov(fovy, (GLfloat)viewportWidth, (GLfloat)viewportHeight, near, far);
+}
+
+}

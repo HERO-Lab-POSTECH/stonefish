@@ -129,13 +129,20 @@ namespace sf
 
         //! A method returning the type of the view.
         ViewType getType();
-        
+
+        //! A method to resize the camera viewport and recalculate projection matrix.
+        /*!
+         \param width the new viewport width [px]
+         \param height the new viewport height [px]
+         */
+        void Resize(GLint width, GLint height) override;
+
         //! A static method to load shaders.
         static void Init();
-        
+
         //! A static method to destroy shaders.
         static void Destroy();
-        
+
     protected:
         void LinearizeDepth();
         void Depth2LinearRanges();
@@ -154,6 +161,9 @@ namespace sf
         bool newData;
         glm::vec2 range;
         GLfloat noiseDepth;
+        GLfloat fovx;
+        GLfloat fovy;
+        bool useCustomFovy;
         std::default_random_engine randGen;
         std::uniform_real_distribution<float> randDist;
         bool usesRanges;

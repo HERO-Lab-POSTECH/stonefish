@@ -104,7 +104,14 @@ namespace sf
 
         //! A method returning the screen texture, used for generating GUI background.
         GLuint getScreenTexture();
-        
+
+        //! A method to resize the screen framebuffer.
+        /*!
+         \param width the new screen width
+         \param height the new screen height
+         */
+        void ResizeScreenFBO(GLint width, GLint height);
+
         //! A method returning a pointer to the OpenGL content manager.
         OpenGLContent* getContent();
         

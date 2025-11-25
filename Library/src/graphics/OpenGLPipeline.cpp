@@ -627,4 +627,40 @@ void OpenGLPipeline::Render(SimulationManager* sim)
     viewsQueue.erase(viewsQueue.begin(), viewsQueue.begin() + updateCount);
 }
 
+void OpenGLPipeline::ResizeScreenFBO(GLint width, GLint height)
+{
+    cInfo("OpenGLPipeline::ResizeScreenFBO(%d, %d) called", width, height);
+    cInfo("Old screenFBO=%u, screenTex=%u", screenFBO, screenTex);
+
+    // Delete old FBO and texture
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteFramebuffers(1, &screenFBO);
+    glDeleteTextures(1, &screenTex);
+
+    // Create new screen framebuffer
+    glGenFramebuffers(1, &screenFBO);
+    OpenGLState::BindFramebuffer(screenFBO);
+    glGenTextures(1, &screenTex);
+    OpenGLState::BindTexture(TEX_BASE, GL_TEXTURE_2D, screenTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTex, 0);
+    OpenGLState::UnbindTexture(TEX_BASE);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE)
+        cError("Display FBO resize failed!");
+    else
+        cInfo("Display FBO resized successfully. New screenFBO=%u, screenTex=%u", screenFBO, screenTex);
+
+    OpenGLState::BindFramebuffer(0);
+
+    // Update rSettings to reflect new size
+    rSettings.windowW = width;
+    rSettings.windowH = height;
+}
+
 }
