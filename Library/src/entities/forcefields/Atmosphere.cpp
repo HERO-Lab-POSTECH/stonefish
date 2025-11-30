@@ -26,6 +26,7 @@
 #include "entities/forcefields/Atmosphere.h"
 #include "graphics/OpenGLAtmosphere.h"
 #include "entities/forcefields/VelocityField.h"
+#include "entities/forcefields/Uniform.h"
 #include "entities/SolidEntity.h"
 #include "utils/SystemUtil.hpp"
 
@@ -181,7 +182,7 @@ int Atmosphere::JulianDay(std::tm& tm)
     int m = tm.tm_mon + 1;
     int y = tm.tm_year + 1900;
     int d = tm.tm_mday;
-    
+
     Scalar X = (m + 9) / 12.0;
     int A = 4716 + y + (int)trunc(X);
     Scalar Y = 275 * m / 9.0;
@@ -190,6 +191,43 @@ int Atmosphere::JulianDay(std::tm& tm)
     Scalar Q = (A + 83) / 100.0;
     Scalar W = 3 * (trunc(Q) + 1) / 4.0;
     return B + 38 - (int)trunc(W);
+}
+
+void Atmosphere::SetWindVelocity(const Vector3& velocity)
+{
+    // Validate velocity
+    Scalar speed = velocity.length();
+
+    // Warn if vertical component is non-zero (unusual for atmospheric wind)
+    if(btFabs(velocity.getZ()) > Scalar(0.1))
+    {
+        cWarning("Wind velocity has significant vertical component (%.2f m/s). NED convention: Z=Down.", (double)velocity.getZ());
+    }
+
+    // Warn if speed exceeds typical marine robotics range
+    if(speed > Scalar(25.0))
+    {
+        cWarning("Wind speed %.2f m/s exceeds typical range (>25 m/s / Beaufort 10).", (double)speed);
+    }
+
+    // Set velocity on the first wind field (assuming Uniform type)
+    if(!wind.empty())
+    {
+        // Check if it's a Uniform velocity field
+        if(wind[0]->getType() == VelocityFieldType::UNIFORM)
+        {
+            Uniform* uniform = static_cast<Uniform*>(wind[0]);
+            uniform->setVelocity(velocity);
+        }
+        else
+        {
+            cWarning("Cannot set wind velocity: wind field is not UNIFORM type.");
+        }
+    }
+    else
+    {
+        cWarning("Cannot set wind velocity: no wind field exists in atmosphere.");
+    }
 }
 
 }

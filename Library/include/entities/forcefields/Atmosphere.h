@@ -77,7 +77,13 @@ namespace sf
          \param field a pointer to a velocity field object
          */
         void AddVelocityField(VelocityField* field);
-        
+
+        //! A method to set wind velocity at runtime.
+        /*!
+         \param velocity the new wind velocity vector in NED coordinates [m/s] (North, East, Down)
+         */
+        void SetWindVelocity(const Vector3& velocity);
+
         //! A method running the aerodynamics computation.
         /*!
          \param world a pointer to the dynamics world
