@@ -42,21 +42,22 @@ Ocean::Ocean(std::string uniqueName, Scalar waves, Fluid l) : ForcefieldEntity(u
 {
     ghost->setCollisionFlags(ghost->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
     oceanState = waves > Scalar(2.0) ? Scalar(2.0) : waves;
-     
+
     Scalar size(100000);
     depth = size;
     Vector3 halfExtents = Vector3(size/Scalar(2), size/Scalar(2), size/Scalar(2));
     ghost->setWorldTransform(Transform(Quaternion::getIdentity(), Vector3(0, 0, size/Scalar(2) - oceanState*Scalar(3)))); //Move ocean influence zone a bit up to account for waves
     ghost->setCollisionShape(new btBoxShape(halfExtents));
-    
+
     currents = std::vector<VelocityField*>(0);
     currentsEnabled = false;
-    
+
     liquid = l;
     wavesDebug.type = RenderableType::HYDRO_POINTS;
     wavesDebug.model = glm::mat4(1.f);
     waterType = Scalar(0.0);
     glOcean = nullptr;
+    hydroMutex = nullptr;
 }
 
 Ocean::~Ocean()
@@ -248,8 +249,9 @@ void Ocean::ApplyFluidForces(btDynamicsWorld* world, btCollisionObject* co, bool
 
 void Ocean::InitGraphics(SDL_mutex* hydrodynamics)
 {
+    hydroMutex = hydrodynamics;
     if(oceanState > 0.0)
-        glOcean = new OpenGLRealOcean(depth, oceanState, hydrodynamics);
+        glOcean = new OpenGLRealOcean(depth, oceanState, hydroMutex);
     else
         glOcean = new OpenGLFlatOcean(depth);
     setWaterType(0.2);
@@ -308,6 +310,31 @@ std::vector<Renderable> Ocean::Render(const std::vector<Actuator*>& act)
     }
 
     return items;
+}
+
+void Ocean::setWaveHeight(Scalar waveHeight)
+{
+    // Clamp wave height to valid range (0.0 to 2.0, following constructor pattern)
+    oceanState = waveHeight > Scalar(2.0) ? Scalar(2.0) : (waveHeight < Scalar(0.0) ? Scalar(0.0) : waveHeight);
+
+    // Recreate OpenGL ocean with new wave parameters
+    if(glOcean != nullptr && hydroMutex != nullptr)
+    {
+        SDL_LockMutex(hydroMutex);
+        delete glOcean;
+        glOcean = nullptr;
+
+        // Reinitialize graphics with new wave height
+        if(oceanState > Scalar(0.0))
+            glOcean = new OpenGLRealOcean(depth, oceanState, hydroMutex);
+        else
+            glOcean = new OpenGLFlatOcean(depth);
+
+        // Restore water type setting
+        glOcean->setWaterType((float)waterType);
+
+        SDL_UnlockMutex(hydroMutex);
+    }
 }
 
 }

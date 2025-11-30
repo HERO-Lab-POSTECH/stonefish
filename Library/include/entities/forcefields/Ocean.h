@@ -156,7 +156,13 @@ namespace sf
 
         //! A method implementing the rendering of the ocean force field.
         std::vector<Renderable> Render(const std::vector<Actuator*>& act);
-        
+
+        //! A method to set wave height at runtime.
+        /*!
+         \param waveHeight the new wave height in meters (0.0 to 2.0)
+         */
+        void setWaveHeight(Scalar waveHeight);
+
     private:
         Fluid liquid;
         std::vector<VelocityField*> currents;
@@ -167,6 +173,7 @@ namespace sf
         Scalar oceanState;
         bool currentsEnabled;
         Renderable wavesDebug;
+        SDL_mutex* hydroMutex;
     };
 }
 
