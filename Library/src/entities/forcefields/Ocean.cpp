@@ -75,7 +75,7 @@ Ocean::~Ocean()
 
 bool Ocean::hasWaves() const
 {
-    return oceanState > Scalar(0);
+    return (oceanState > Scalar(0) && glOcean != nullptr);
 }
 
 bool Ocean::hasParticles() const
@@ -141,7 +141,7 @@ bool Ocean::IsInsideFluid(const Vector3& point)
 
 float Ocean::GetDepth(const glm::vec3& point)
 {
-    if(hasWaves()) //Geometric waves
+    if(hasWaves() && glOcean != nullptr) //Geometric waves
     {
         GLfloat waveHeight = glOcean->ComputeWaveHeight(point.x, point.y);
         glm::vec3 wavePoint(point.x, point.y, waveHeight);
@@ -150,10 +150,10 @@ float Ocean::GetDepth(const glm::vec3& point)
 #endif
         return point.z - waveHeight;
     }
-    else //Flat surface
+    else //Flat surface or graphics not initialized
     {
         glm::vec3 wavePoint(point.x, point.y, 0.f);
-#ifdef DEBUG_WAVES  
+#ifdef DEBUG_WAVES
         wavesDebug.points.push_back(wavePoint);
 #endif
         return point.z;
