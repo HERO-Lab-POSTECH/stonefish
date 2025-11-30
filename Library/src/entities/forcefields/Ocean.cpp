@@ -314,8 +314,8 @@ std::vector<Renderable> Ocean::Render(const std::vector<Actuator*>& act)
 
 void Ocean::setWaveHeight(Scalar waveHeight)
 {
-    // Clamp wave height to valid range (0.0 to 2.0, following constructor pattern)
-    oceanState = waveHeight > Scalar(2.0) ? Scalar(2.0) : (waveHeight < Scalar(0.0) ? Scalar(0.0) : waveHeight);
+    // Clamp wave height to valid range (0.0 to 10.0)
+    oceanState = waveHeight > Scalar(10.0) ? Scalar(10.0) : (waveHeight < Scalar(0.0) ? Scalar(0.0) : waveHeight);
 
     // Recreate OpenGL ocean with new wave parameters
     if(glOcean != nullptr && hydroMutex != nullptr)
