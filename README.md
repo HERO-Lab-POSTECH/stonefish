@@ -1,6 +1,8 @@
 ![Stonefish logo](https://github.com/patrykcieslak/stonefish/blob/master/Library/shaders/logo_64.png)
-# ***Stonefish***
+# ***Stonefish*** (v1.3.0)
 ### An advanced simulation tool developed for marine robotics.
+
+> **Note**: This is the HERO Lab fork with custom fixes for Forward-Looking Sonar (FLS) and other marine robotics features.
 
 Stonefish is a C++ library combining a physics engine and a lightweight rendering pipeline. The physics engine is based on the core functionality of the [Bullet Physics](https://pybullet.org) library, extended to deliver realistic simulation of marine robots. It is directed towards researchers in the field of marine robotics but can as well be used as a general purpose robot simulator. 
 
