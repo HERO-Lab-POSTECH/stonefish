@@ -47,6 +47,7 @@ FLS::FLS(std::string uniqueName, unsigned int numOfBeams, unsigned int numOfBins
     cMap = cm;
     sonarData = NULL;
     displayData = NULL;
+    segmentationData = NULL;
     newDataCallback = NULL;
     glFLS = nullptr;
 }
@@ -54,6 +55,7 @@ FLS::FLS(std::string uniqueName, unsigned int numOfBeams, unsigned int numOfBins
 FLS::~FLS()
 {
     if(displayData != NULL) delete [] displayData;
+    if(segmentationData != NULL) delete [] segmentationData;
     glFLS = nullptr;
 }
 
@@ -101,6 +103,11 @@ GLubyte* FLS::getDisplayDataPointer()
     return displayData;
 }
 
+GLushort* FLS::getSegmentationDataPointer()
+{
+    return segmentationData;
+}
+
 Scalar FLS::getRangeMin() const
 {
     return Scalar(range.x);
@@ -136,6 +143,7 @@ void FLS::InitGraphics()
     unsigned int w, h;
     getDisplayResolution(w, h);
     displayData = new GLubyte[w*h*3];
+    segmentationData = new GLushort[resX*resY](); //Zeroed: a failed PBO map must publish background, not heap garbage
 }
 
 void FLS::SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up)
@@ -160,6 +168,10 @@ void FLS::NewDataReady(void* data, unsigned int index)
             unsigned int w, h;
             getDisplayResolution(w, h);
             memcpy(displayData, data, w*h*3);
+        }
+        else if(index == 2)
+        {
+            memcpy(segmentationData, data, resX*resY*sizeof(GLushort));
         }
         else
         {

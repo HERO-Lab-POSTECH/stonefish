@@ -1124,6 +1124,7 @@ bool ScenarioParser::ParseStatic(XMLElement* element)
     }
 
     //---- Add to world ----
+    ParseSegmentationClass(element, object);
     sm->AddStaticEntity(object, trans);
 
     return true;
@@ -1452,6 +1453,7 @@ bool ScenarioParser::ParseAnimated(XMLElement* element)
     }
 
     //---- Add to world ----
+    ParseSegmentationClass(element, object);
     sm->AddAnimatedEntity(object);
 
     return true;
@@ -1543,6 +1545,7 @@ bool ScenarioParser::ParseDynamic(XMLElement* element)
     }
 
     //---- Add to world ----
+    ParseSegmentationClass(element, solid);
     sm->AddSolidEntity(solid, trans);
 
     return true;
@@ -4190,6 +4193,20 @@ bool ScenarioParser::ParseVector(const char* components, Vector3& v)
     v.setY(y);
     v.setZ(z);
     return true;
+}
+
+void ScenarioParser::ParseSegmentationClass(XMLElement* element, Entity* entity)
+{
+    XMLElement* item = element->FirstChildElement("segmentation");
+    if(item == nullptr)
+        return;
+    int classId = 0;
+    if(item->QueryIntAttribute("class", &classId) != XML_SUCCESS || classId < 0 || classId > 65535)
+    {
+        log.Print(MessageType::WARNING, "Segmentation class of entity '%s' not properly defined - ignored!", entity->getName().c_str());
+        return;
+    }
+    entity->setSegmentationClassId((unsigned short)classId);
 }
 
 bool ScenarioParser::ParseTransform(XMLElement* element, Transform& T)

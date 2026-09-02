@@ -77,8 +77,10 @@ OpenGLFLS::OpenGLFLS(glm::vec3 eyePosition, glm::vec3 direction, glm::vec3 sonar
     views.push_back(sv);
 
     //Allocate resources
+    //Third channel carries the semantic class of the surface sample (0 = unclassified).
+    //RGBA (not RGB) because GL_RGB32F is not an image load/store compatible format.
     inputRangeIntensityTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D_ARRAY, glm::uvec3(nViewBeams, (GLuint)nBeamSamples, nViews),
-                                                            GL_RG32F, GL_RG, GL_FLOAT, NULL, FilteringMode::NEAREST, false);
+                                                            GL_RGBA32F, GL_RGBA, GL_FLOAT, NULL, FilteringMode::NEAREST, false);
     glGenRenderbuffers(1, &inputDepthRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, inputDepthRBO); 
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, nViewBeams, (GLuint)nBeamSamples);  
@@ -111,6 +113,10 @@ OpenGLFLS::OpenGLFLS(glm::vec3 eyePosition, glm::vec3 direction, glm::vec3 sonar
                                                   GL_R32F, GL_RED, GL_FLOAT, NULL, FilteringMode::BILINEAR, false);
     outputTex[1] = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(nBeams, nBins, 1), 
                                                   GL_R8, GL_RED, GL_UNSIGNED_BYTE, NULL, FilteringMode::TRILINEAR, false);
+    //Segmentation labels - NEAREST is mandatory, an interpolated class id is meaningless
+    segTex = OpenGLContent::GenerateTexture(GL_TEXTURE_2D, glm::uvec3(nBeams, nBins, 1),
+                                            GL_R16UI, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL, FilteringMode::NEAREST, false);
+    segPBO = 0;
         
     //Sonar display fan
     glGenTextures(1, &displayTex);
@@ -165,6 +171,7 @@ OpenGLFLS::OpenGLFLS(glm::vec3 eyePosition, glm::vec3 direction, glm::vec3 sonar
     sonarOutputShader = new GLSLShader(sources);
     sonarOutputShader->AddUniform("sonarInput", ParameterType::INT);
     sonarOutputShader->AddUniform("sonarOutput", ParameterType::INT);
+    sonarOutputShader->AddUniform("sonarSegOutput", ParameterType::INT);
     sonarOutputShader->AddUniform("beams", ParameterType::UVEC2);
     sonarOutputShader->AddUniform("range", ParameterType::VEC3);
     sonarOutputShader->AddUniform("gain", ParameterType::FLOAT);
@@ -174,6 +181,7 @@ OpenGLFLS::OpenGLFLS(glm::vec3 eyePosition, glm::vec3 direction, glm::vec3 sonar
     sonarOutputShader->Use();
     sonarOutputShader->SetUniform("sonarInput", TEX_POSTPROCESS1);
     sonarOutputShader->SetUniform("sonarOutput", TEX_POSTPROCESS2);
+    sonarOutputShader->SetUniform("sonarSegOutput", TEX_POSTPROCESS3);
     sonarOutputShader->SetUniform("beams", glm::uvec2(views.front().nBeams, views.back().nBeams));
     sonarOutputShader->SetUniform("range", glm::vec3(range.x, range.y, (range.y-range.x)/(GLfloat)nBins));
     sonarOutputShader->SetUniform("gain", gain);
@@ -196,6 +204,8 @@ OpenGLFLS::~OpenGLFLS()
     delete sonarOutputShader;
     delete sonarPostprocessShader;
     glDeleteTextures(2, outputTex);
+    glDeleteTextures(1, &segTex);
+    if(segPBO != 0) glDeleteBuffers(1, &segPBO);
 }
 
 void OpenGLFLS::UpdateTransform()
@@ -270,6 +280,15 @@ void OpenGLFLS::UpdateTransform()
             glUnmapBuffer(GL_PIXEL_PACK_BUFFER); //Release pointer to the mapped buffer
         }
         
+        //Segmentation must land before index 1, which is what triggers the sensor callback
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, segPBO);
+        src = (GLubyte*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+        if(src)
+        {
+            sonar->NewDataReady(src, 2);
+            glUnmapBuffer(GL_PIXEL_PACK_BUFFER); //Release pointer to the mapped buffer
+        }
+
         glBindBuffer(GL_PIXEL_PACK_BUFFER, outputPBO);
         src = (GLubyte*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
         if(src)
@@ -299,6 +318,11 @@ void OpenGLFLS::setSonar(FLS* s)
     glGenBuffers(1, &displayPBO);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, displayPBO);
     glBufferData(GL_PIXEL_PACK_BUFFER, viewportWidth * viewportHeight * 3, 0, GL_STREAM_READ);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+    glGenBuffers(1, &segPBO);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, segPBO);
+    glBufferData(GL_PIXEL_PACK_BUFFER, nBeams * nBins * sizeof(GLushort), 0, GL_STREAM_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
@@ -339,6 +363,7 @@ void OpenGLFLS::ComputeOutput(std::vector<Renderable>& objects)
             shader->SetUniform("M", M);
             shader->SetUniform("N", glm::mat3(glm::transpose(glm::inverse(M))));
             shader->SetUniform("restitution", (GLfloat)mat.restitution);
+            shader->SetUniform("classId", (GLfloat)objects[h].classId);
             if(normalMapping)
                 OpenGLState::BindTexture(TEX_MAT_NORMAL, GL_TEXTURE_2D, look.normalTexture);
             content->DrawObject(objects[h].objectId, objects[h].lookId, objects[h].model);
@@ -349,8 +374,9 @@ void OpenGLFLS::ComputeOutput(std::vector<Renderable>& objects)
     OpenGLState::BindFramebuffer(0);
 
     //Compute sonar output
-    glBindImageTexture(TEX_POSTPROCESS1, inputRangeIntensityTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG32F);
+    glBindImageTexture(TEX_POSTPROCESS1, inputRangeIntensityTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
     glBindImageTexture(TEX_POSTPROCESS2, outputTex[0], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+    glBindImageTexture(TEX_POSTPROCESS3, segTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R16UI);
     sonarOutputShader->Use();
     sonarOutputShader->SetUniform("noiseSeed", glm::vec3(randDist(randGen), randDist(randGen), randDist(randGen)));
     sonarOutputShader->SetUniform("noiseStddev", noise); //Multiplicative, additive (0.025f, 0.035f)
@@ -436,6 +462,12 @@ void OpenGLFLS::DrawLDR(GLuint destinationFBO, bool updated)
         OpenGLState::BindTexture(TEX_POSTPROCESS1, GL_TEXTURE_2D, displayTex);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, displayPBO);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+        //Written by the output compute shader through an image, so it needs its own barrier before a texture read
+        glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
+        OpenGLState::BindTexture(TEX_POSTPROCESS1, GL_TEXTURE_2D, segTex);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, segPBO);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
         OpenGLState::UnbindTexture(TEX_POSTPROCESS1);
         newData = true;

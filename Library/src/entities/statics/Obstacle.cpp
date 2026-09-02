@@ -187,6 +187,7 @@ std::vector<Renderable> Obstacle::Render()
     {
         Renderable item;
         item.type = RenderableType::SOLID;
+        item.classId = getSegmentationClassId();
         item.materialName = mat.name;
         
         if(dm == DisplayMode::GRAPHICAL && graObjectId >= 0)

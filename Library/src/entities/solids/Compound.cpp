@@ -462,6 +462,7 @@ std::vector<Renderable> Compound::Render(size_t partId)
             || (!parts.at(partId).isExternal && displayInternals))
         {
             item.type = RenderableType::SOLID;
+            item.classId = getSegmentationClassId();
             item.materialName = parts.at(partId).solid->getMaterial().name;
                 
             if(dm == DisplayMode::GRAPHICAL)

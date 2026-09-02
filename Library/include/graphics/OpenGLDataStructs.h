@@ -474,6 +474,7 @@ namespace sf
         RenderableType type;
         int lookId;
         int objectId;
+        unsigned short classId = 0; //Semantic class of the source entity (0 = unclassified)
         std::string materialName;
         glm::mat4 model;
         std::vector<glm::vec3> points;

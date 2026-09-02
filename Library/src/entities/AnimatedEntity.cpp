@@ -309,6 +309,7 @@ std::vector<Renderable> AnimatedEntity::Render()
         if(graObjectId >= 0)
         {
             item.type = RenderableType::SOLID;
+            item.classId = getSegmentationClassId();
             item.materialName = mat.name;
             item.objectId = dm == DisplayMode::GRAPHICAL ? graObjectId : phyObjectId;
             item.lookId = dm == DisplayMode::GRAPHICAL ? lookId : -1;

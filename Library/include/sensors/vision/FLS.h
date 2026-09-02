@@ -136,6 +136,12 @@ namespace sf
         //! A method returning a pointer to the visualisation image data.
         GLubyte* getDisplayDataPointer();
         
+        //! A method returning a pointer to the segmentation image data.
+        /*!
+         Same beam x bin layout as the intensity image, one class id per bin (0 = unclassified).
+         */
+        GLushort* getSegmentationDataPointer();
+        
         //! A method returning the type of the vision sensor.
         VisionSensorType getVisionSensorType();
         
@@ -145,6 +151,7 @@ namespace sf
         OpenGLFLS* glFLS;
         GLubyte* sonarData;
         GLubyte* displayData;
+        GLushort* segmentationData;
         glm::vec2 range;
         glm::vec2 noise;
         Scalar gain;
