@@ -102,6 +102,8 @@ namespace sf
         glm::vec2 noise;
         //OpenGL
         GLuint outputTex[2];
+        GLuint segTex;
+        GLuint segPBO;
         GLuint fanDiv;
         GLSLShader* sonarOutputShader;
         GLSLShader* sonarPostprocessShader;

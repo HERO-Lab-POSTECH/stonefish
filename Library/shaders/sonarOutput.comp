@@ -22,11 +22,14 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-// Two inputs, linear range and recorded intensity.
-layout(rg32f) uniform image2DArray sonarInput;
+// Three inputs, linear range, recorded intensity and semantic class of the sample.
+layout(rgba32f) uniform image2DArray sonarInput;
 
 // One output - intensity for each bin/beam combination
 layout(r32f) uniform image2D sonarOutput;
+
+// One output - semantic class of the sample that won each bin/beam combination
+layout(r16ui) uniform uimage2D sonarSegOutput;
 
 uniform uvec2 beams; //beams1, beams2
 uniform vec3 range; //min, max, step
@@ -34,7 +37,11 @@ uniform float gain;
 uniform vec3 noiseSeed;
 uniform vec2 noiseStddev;
 
-vec3 binHistogram[N_BINS]; // .x = intensity, .y = range, .z = valid flag
+// .x = intensity, .y = range, .z = class + 1 (0 means no valid sample)
+// The class rides on the valid flag instead of a fourth component on purpose:
+// this array is per-invocation private memory (N_BINS entries), so a vec4 would
+// cost 33% more of it for a value that is only ever needed alongside the flag.
+vec3 binHistogram[N_BINS];
 
 #inject "gaussianNoise.glsl"
 
@@ -52,7 +59,7 @@ void main()
     if(gl_GlobalInvocationID.x < viewBeams)
     {
         for(uint i=0; i<N_BINS; ++i) //Initialize histogram buffer
-            binHistogram[i] = vec3(0.0, range.y + 1.0, 0.0); // intensity, sentinel range, invalid flag
+            binHistogram[i] = vec3(0.0, range.y + 1.0, 0.0); // intensity, sentinel range, no valid sample
 
         ivec3 sampleCoord;
         sampleCoord.x = int(gl_GlobalInvocationID.x);
@@ -63,7 +70,7 @@ void main()
             sampleCoord.y = i;
 
             //Get sample value
-            vec2 rangeIntensity = imageLoad(sonarInput, sampleCoord).xy;
+            vec3 rangeIntensity = imageLoad(sonarInput, sampleCoord).xyz; //.z = class
             if(rangeIntensity.x < range.x || rangeIntensity.x >= range.y) //Outside valid range?
                 continue;
 
@@ -78,7 +85,7 @@ void main()
             {
                 binHistogram[bin].x = weightedIntensity;
                 binHistogram[bin].y = rangeIntensity.x;
-                binHistogram[bin].z = 1.0; // Mark as valid
+                binHistogram[bin].z = rangeIntensity.z + 1.0; // Mark as valid, carrying the winner's class
             }
         }
 
@@ -96,6 +103,9 @@ void main()
                 data += gain * binHistogram[i].x * mulNoise; //Signal + multiplicative noise (Gaussian beam gain noise)
             //data += data * rand(vec2(noiseSeed.x * i, noiseSeed.x * globalBeam)) * 0.5; // Speckle noise (Uniform multiplicative noise)
             imageStore(sonarOutput, ivec2(globalBeam, N_BINS-1-i), vec4(data));
+            //Segmentation label - no noise, no gain, same bin flip so it stays pixel aligned with the intensity image
+            uint segClass = binHistogram[i].z > 0.0 ? uint(binHistogram[i].z - 1.0) : 0u;
+            imageStore(sonarSegOutput, ivec2(globalBeam, N_BINS-1-i), uvec4(segClass));
         }
     }
 }

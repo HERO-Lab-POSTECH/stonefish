@@ -21,10 +21,11 @@
 
 in vec3 normal;
 in vec3 fragPos;
-layout(location = 0) out vec2 rangeIntensity;
+layout(location = 0) out vec4 rangeIntensityClass;
 
 uniform vec3 eyePos;
 uniform float restitution;
+uniform float classId;
 
 void main()
 {
@@ -32,6 +33,8 @@ void main()
     vec3 toEye = eyePos-fragPos;
     float len = length(toEye);
     toEye /= len;
-    rangeIntensity.x = len;
-    rangeIntensity.y = clamp(dot(N, toEye), 0.0, 1.0) * restitution;
+    rangeIntensityClass.x = len;
+    rangeIntensityClass.y = clamp(dot(N, toEye), 0.0, 1.0) * restitution;
+    rangeIntensityClass.z = classId;
+    rangeIntensityClass.w = 0.0;
 }

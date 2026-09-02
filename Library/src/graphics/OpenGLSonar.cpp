@@ -153,6 +153,7 @@ void OpenGLSonar::Init()
     sonarInputShader[0]->AddUniform("N", ParameterType::MAT3);
     sonarInputShader[0]->AddUniform("eyePos", ParameterType::VEC3);
     sonarInputShader[0]->AddUniform("restitution", ParameterType::FLOAT);
+    sonarInputShader[0]->AddUniform("classId", ParameterType::FLOAT);
     
     sonarInputShader[1] = new GLSLShader("sonarInputUv.frag", "sonarInputUv.vert");
     sonarInputShader[1]->AddUniform("MVP", ParameterType::MAT4);
@@ -160,6 +161,7 @@ void OpenGLSonar::Init()
     sonarInputShader[1]->AddUniform("N", ParameterType::MAT3);
     sonarInputShader[1]->AddUniform("eyePos", ParameterType::VEC3);
     sonarInputShader[1]->AddUniform("restitution", ParameterType::FLOAT);
+    sonarInputShader[1]->AddUniform("classId", ParameterType::FLOAT);
     sonarInputShader[1]->AddUniform("texNormal", ParameterType::INT);
     sonarInputShader[1]->Use();
     sonarInputShader[1]->SetUniform("texNormal", TEX_MAT_NORMAL);
