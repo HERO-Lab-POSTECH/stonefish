@@ -36,6 +36,7 @@ Entity::Entity(std::string uniqueName)
 {
     name = SimulationApp::getApp()->getSimulationManager()->getNameManager()->AddName(uniqueName);
     renderable = true;
+    segmentationClassId = 0;
 }
 
 Entity::~Entity(void)
@@ -57,6 +58,16 @@ bool Entity::isRenderable() const
 std::string Entity::getName() const
 {
     return name;
+}
+
+void Entity::setSegmentationClassId(unsigned short classId)
+{
+    segmentationClassId = classId;
+}
+
+unsigned short Entity::getSegmentationClassId() const
+{
+    return segmentationClassId;
 }
         
 }

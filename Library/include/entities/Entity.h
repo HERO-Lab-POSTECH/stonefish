@@ -78,6 +78,15 @@ namespace sf
         //! A method returning the name of the entity.
         std::string getName() const;
         
+        //! A method used to set the semantic class of the entity, used by segmentation-capable sensors.
+        /*!
+         \param classId the semantic class identifier (0 means unclassified/background)
+         */
+        void setSegmentationClassId(unsigned short classId);
+        
+        //! A method returning the semantic class of the entity.
+        unsigned short getSegmentationClassId() const;
+        
         //! A method returning the type of the entity.
         virtual EntityType getType() const = 0;
         
@@ -100,6 +109,7 @@ namespace sf
     private:
         bool renderable;
         std::string name;
+        unsigned short segmentationClassId;
     };
 }
 

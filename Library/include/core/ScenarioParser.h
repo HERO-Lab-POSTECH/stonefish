@@ -281,6 +281,7 @@ namespace sf
         bool ParseTransform(XMLElement* element, Transform& T);
         bool ParseColor(XMLElement* element, Color& c);
         bool ParseColorMap(XMLElement* element, ColorMap& cm);
+        void ParseSegmentationClass(XMLElement* element, Entity* entity);
     
         XMLDocument doc;
         SimulationManager* sm;

@@ -109,6 +109,7 @@ std::vector<Renderable> StaticEntity::Render()
         
         Renderable item;
         item.type = RenderableType::SOLID;
+        item.classId = getSegmentationClassId();
         item.materialName = mat.name;
         item.objectId = phyObjectId;
         item.lookId = dm == DisplayMode::GRAPHICAL ? lookId : -1;
