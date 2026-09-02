@@ -143,7 +143,7 @@ void FLS::InitGraphics()
     unsigned int w, h;
     getDisplayResolution(w, h);
     displayData = new GLubyte[w*h*3];
-    segmentationData = new GLushort[resX*resY];
+    segmentationData = new GLushort[resX*resY](); //Zeroed: a failed PBO map must publish background, not heap garbage
 }
 
 void FLS::SetupCamera(const Vector3& eye, const Vector3& dir, const Vector3& up)

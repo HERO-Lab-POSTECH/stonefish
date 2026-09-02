@@ -4,7 +4,7 @@
 
 ### Added
 - FLS semantic segmentation output — 강도 이미지와 픽셀 정렬된 클래스 라벨(beam x bin, R16UI)
-  - 라벨 소스: `.scn`의 `<segmentation class="N"/>` (`<static>`/`<dynamic>` 자식, 없으면 0=배경)
+  - 라벨 소스: `.scn`의 `<segmentation class="N"/>` (`<static>`/`<dynamic>`/`<animated>` 자식, 없으면 0=배경)
   - `Entity::setSegmentationClassId()` / `getSegmentationClassId()`, `Renderable.classId`
   - `FLS::getSegmentationDataPointer()` — beam x bin, `GLushort`, 강도 이미지와 같은 격자
   - 동작 근거: `sonarOutput.comp`가 bin마다 샘플을 하나만 고르므로(가까운 range 우선)
